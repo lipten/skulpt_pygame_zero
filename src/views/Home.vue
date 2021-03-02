@@ -5,11 +5,11 @@
         <textarea id="yourcode" class="code-area"></textarea>
       </div>
       <div class="right-area">
-        <el-button type="primary" @click="run">运行</el-button>
+        <el-button type="primary" @click="run">Run</el-button>
         <div id="stage" class="stage"></div>
         <div class="output">
-          <p>输出内容：</p>
-          <div id="output" ></div>
+          <p>output：</p>
+          <div id="output"></div>
         </div>
       </div>
     </div>
@@ -36,24 +36,31 @@ export default defineComponent({
       theme: "idea",
     });
     this.editor.setValue(
-`from pgz import *
+`from pgzero import *
 import random
-
+pen = screen.draw
 resources = {
-  'bg': 'https://static.lipten.link/blogs/bg.png',
-  'xiaomeng1': 'https://static.lipten.link/blogs/xiaomeng1.png',
-  'xiaomeng2': 'https://static.lipten.link/blogs/xiaomeng2.png',
-  'star': 'https://static.lipten.link/blogs/star.png',
+  'bg': 'https://static.lipten.link/blogs/bg2.png',
+  'pig1': 'https://static.lipten.link/blogs/pig1.png',
+  'pig2': 'https://static.lipten.link/blogs/pig2.png',
+  'money': 'https://static.lipten.link/blogs/pocket.png',
   'bgm': 'https://static.lipten.link/blogs/bgm.mp3',
   'sound': 'https://static.lipten.link/blogs/sound.mp3'
 }
-bg=Actor(resources['bg'])
-xiaomeng = Actor((resources['xiaomeng1'], resources['xiaomeng2']))
-xiaomeng.pos = 0, -120
-xiaomeng.width = 100
-xiaomeng.height = 140
 
-star_list = []
+half_width = WIDTH/2
+half_height = HEIGHT/2
+
+bg=Actor(resources['bg'])
+bg.width = WIDTH
+bg.height = HEIGHT
+bg.pos = half_width, half_height
+pig = Actor((resources['pig2'], resources['pig1']))
+pig.pos = half_width, half_height+120
+pig.width = 180
+pig.height = 140
+
+money_list = []
 
 music.play(resources['bgm'])
 music.set_volume(0.2)
@@ -61,31 +68,33 @@ music.set_volume(0.2)
 score = 0
 time = 30
 game_end = False
-class Star:
+class Money:
     def __init__(self, x, y, speed):
-        self.star = Actor(resources['star'])
-        self.star.x = x
-        self.star.y = y
+        self.money = Actor(resources['money'])
+        self.money.x = x
+        self.money.y = y
+        self.money.width = 60
+        self.money.height = 60
         self.speed = speed
         self.is_out = False
 
     def move(self):
-        star = self.star
-        star.y -= self.speed
-        if star.y < HEIGHT / 2 * -1:
+        money = self.money
+        money.y += self.speed
+        if money.y > HEIGHT:
             self.is_out = True
-            self.star.remove()
+            self.money.remove()
 
 
-def make_star():
-    x = random.randint(WIDTH / -2, WIDTH / 2)
-    y = HEIGHT / 2
+def make_money():
+    x = random.randint(0, WIDTH)
+    y = 0
     speed = random.randint(4, 10)
-    star = Star(x, y, speed)
-    star_list.append(star)
+    money = Money(x, y, speed)
+    money_list.append(money)
 
 
-clock.schedule_interval(make_star, 1)
+clock.schedule_interval(make_money, 1)
 
 def countdown():
     global time
@@ -93,7 +102,7 @@ def countdown():
     if time <= 0:
         game_end = True
         clock.unschedule(countdown)
-        clock.unschedule(make_star)
+        clock.unschedule(make_money)
         music.stop()
     else:
         time -= 1
@@ -103,41 +112,41 @@ clock.schedule_interval(countdown, 1)
 def update():
     global score
     if not game_end:
-        for star in star_list:
-            star.move()
-            if star.star.collide_actor(xiaomeng):
+        for money in money_list:
+            money.move()
+            if money.money.collide_actor(pig):
                 score += 1
-                sound.play("resources['sound']")
-                star.is_out = True
-                star.star.remove()
-            if star.is_out:
-                star_list.remove(star)
+                sound.play(resources['sound'])
+                money.is_out = True
+                money.money.remove()
+            if money.is_out:
+                money_list.remove(money)
 
-        if keyboard.Left and xiaomeng.x > WIDTH / 2 * -1:
-            xiaomeng.x -= 15
-        elif keyboard.Right and xiaomeng.x < WIDTH / 2:
-            xiaomeng.x += 15
+        if keyboard.left and pig.x > 0:
+            pig.x -= 15
+        elif keyboard.right and pig.x < WIDTH:
+            pig.x += 15
         pen.clear()
         text = "得分：" + str(score) + "  时间：" + str(time)
-        pen.text(text, (0, 140), "yellow", 30)
+        pen.text(text, (half_width,100), "yellow", 30)
     else:
-        pen.text("time over !!!", (0,0), 'purple',  40)
+        pen.text("time over !!!", (half_width,half_height), 'purple',  40)
 
 def on_key_down(key):
-    if key == 'ArrowLeft':
-        xiaomeng.frame = 2
-    elif key == 'ArrowRight':
-        xiaomeng.frame = 1
+    if key == Keys.LEFT:
+        pig.frame = 2
+    elif key == Keys.RIGHT:
+        pig.frame = 1
 
 
-def on_mouse_down(pos):
+def on_mouse_down(pos, button):
     x, y = pos
-    if x > 0:
-        xiaomeng.frame = 1
-        xiaomeng.x += 50
-    else:
-        xiaomeng.frame = 2
-        xiaomeng.x -= 50`)
+    if mouse.LEFT:
+        pig.frame = 2
+        pig.x -= 50
+    elif mouse.RIGHT:
+        pig.frame = 1
+        pig.x += 50`)
   },
   methods: {
     run() {
@@ -172,7 +181,7 @@ def on_mouse_down(pos):
   .stage {
     width: 100%;
     height: 400px;
-    background: #fff;
+    background: #000;
   }
   .output {
     height: 400px;

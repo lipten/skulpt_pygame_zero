@@ -3,7 +3,6 @@ import '../pygame-zero/main'
 const PyGameZero = window.PyGameZero;
 function outf(text) {
   const mypre = document.getElementById("output");
-  console.log(mypre)
   mypre.innerHTML = mypre.innerHTML + text;
 }
 function builtinRead(file) {
@@ -54,6 +53,7 @@ export const runPy = (content) => {
     },
     function(err) {
       console.log(err);
+      // mypre.innerHTML = mypre.innerHTML + err;
     }
   );
 };

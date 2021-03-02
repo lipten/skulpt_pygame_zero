@@ -1,7 +1,7 @@
 import {loadScript} from '../utils/common'
 const Sk = window.Sk;
 const libList = {
-  "./pgz/__init__.js": "./pygame-zero.js",
+  "./pgzero/__init__.js": "./pygame-zero.js",
 }
 window.PyGameZero = {
   load: function(file) {

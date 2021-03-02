@@ -2,14 +2,33 @@ const Sk = window.Sk;
 const PIXI = window.PIXI;
 import {textureRecources, defineGetter, defineProperty, hitTestRectangle, genkwaFunc} from './utils'
 
+// 17中标准颜色名对应的色值
+const ColorNameMap = {
+  aqua: '#00FFFF',
+  black: '#000000',
+  blue: '#0000FF',
+  fuchsia: '#FF00FF',
+  gray: '#808080',
+  green: '#008000',
+  lime: '#00FF00',
+  maroon: '#800000',
+  navy: '#000080',
+  olive: '#808000',
+  orange: '#FFA500',
+  purple: '#800080',
+  red: '#FF0000',
+  silver: '#C0C0C0',
+  teal: '#008080',
+  white: '#FFFFFF',
+  yellow: '#FFFF00',
+}
+
 window.$builtinmodule = function() {
-  const mod = { __name__: new Sk.builtin.str("pgz") };
+  const mod = { __name__: new Sk.builtin.str("pygame-zero") };
   let type = "WebGL"
   if(!PIXI.utils.isWebGLSupported()){
     type = "canvas"
   }
-  let mousePos = {};
-  const keyboard = {};
 
   // PIXI.utils.sayHello(type)
   //Aliases
@@ -38,27 +57,28 @@ window.$builtinmodule = function() {
   const halfWidth = Math.round(app.view.width/2);
   const halfHeight = Math.round(app.view.height/2);
   function transX(x, isReserve) {
-    if (isReserve) {
-      return x - halfWidth
-    } else {
-      return x + halfWidth
-    }
-    
+    // if (isReserve) {
+    //   return x - halfWidth
+    // } else {
+    //   return x + halfWidth
+    // }
+    return x;
   }
   function transY(y, isReserve) {
-    if (isReserve) {
-      if (y > halfHeight) {
-        return (y - halfHeight) * -1;
-      } else {
-        return halfHeight - y;
-      }
-    } else {
-      if (y > 0) {
-        return halfHeight - y;
-      } else {
-        return halfHeight + (y * -1);
-      }
-    }
+    // if (isReserve) {
+    //   if (y > halfHeight) {
+    //     return (y - halfHeight) * -1;
+    //   } else {
+    //     return halfHeight - y;
+    //   }
+    // } else {
+    //   if (y > 0) {
+    //     return halfHeight - y;
+    //   } else {
+    //     return halfHeight + (y * -1);
+    //   }
+    // }
+    return y;
   }
   function transPos(pos, isReserve){
     if (!pos) {
@@ -66,27 +86,7 @@ window.$builtinmodule = function() {
     }
     return [transX(pos[0], isReserve), transY(pos[1], isReserve)]
   }
-
-  // 17中标准颜色名对应的色值
-  const ColorNameMap = {
-    aqua: '#00FFFF',
-    black: '#000000',
-    blue: '#0000FF',
-    fuchsia: '#FF00FF',
-    gray: '#808080',
-    green: '#008000',
-    lime: '#00FF00',
-    maroon: '#800000',
-    navy: '#000080',
-    olive: '#808000',
-    orange: '#FFA500',
-    purple: '#800080',
-    red: '#FF0000',
-    silver: '#C0C0C0',
-    teal: '#008080',
-    white: '#FFFFFF',
-    yellow: '#FFFF00',
-  }
+  
   function transColor(color) {
     if (Array.isArray(color)) {
       return utils.rgb2hex(color);
@@ -107,9 +107,6 @@ window.$builtinmodule = function() {
   
   mod.WIDTH = Sk.ffi.remapToPy(app.view.width);
   mod.HEIGHT = Sk.ffi.remapToPy(app.view.height);
-  // app.stage.y = app.view.height;
-  // app.stage.angle = 180;
-  // app.stage.scale.set(-1,1)
 
   // 角色类
   mod.Actor = Sk.misceval.buildClass(mod, function($gbl, $loc) {
@@ -152,16 +149,16 @@ window.$builtinmodule = function() {
     })
     $loc.angle = defineProperty('sprite', 'angle')
     $loc.show  = defineProperty('sprite', 'visible')
-    // $loc.image = defineProperty(function(self) {
-    //   return Sk.ffi.remapToPy(self['sprite']['texture'])
-    // }, function (self, val) {
-    //   return new Sk.misceval.promiseToSuspension(new Promise(function(resolve) {
-    //     textureRecources(`./assets/${self.actorName}/${val.v}.png`).then(function(texture) {
-    //       self['sprite']['texture'] = texture;
-    //       resolve()
-    //     })
-    //   }))
-    // })
+    $loc.image = defineProperty(function(self) {
+      return Sk.ffi.remapToPy(self['sprite']['texture'])
+    }, function (self, val) {
+      return new Sk.misceval.promiseToSuspension(new Promise(function(resolve) {
+        textureRecources(val.v).then(function(texture) {
+          self['sprite']['texture'] = texture;
+          resolve()
+        })
+      }))
+    })
     $loc.frame = defineProperty(function(self) {
       return Sk.ffi.remapToPy(self['sprite']['texture'])
       }, function (self, val) {
@@ -220,8 +217,8 @@ window.$builtinmodule = function() {
     $loc.size = defineGetter((self) => Sk.ffi.remapToPy(self.size))
   }, 'Rect', [])
   // 画笔类
-  mod.pen = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
-    const graph = new Graphics();
+  const graph = new Graphics();
+  mod.draw = Sk.misceval.buildClass(mod, function($gbl, $loc) {
     $loc.__init__ = new Sk.builtin.func(function(self) {
       self.size = 5;
     })
@@ -317,7 +314,7 @@ window.$builtinmodule = function() {
       }
     })
     $loc.clear = new Sk.builtin.func(function(self) {
-      // graph.clear()
+      graph.clear()
       self.basicText && self.basicText.destroy()
     })
     $loc.text = new Sk.builtin.func(genkwaFunc(function(args, kwa) {
@@ -342,8 +339,17 @@ window.$builtinmodule = function() {
       }
       app.stage.addChild(basicText);
     }, true))
-  }, 'Pen', []));
-
+  }, 'Draw', []);
+  // 屏幕类
+  mod.screen = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
+    $loc.draw = Sk.misceval.callsimOrSuspend(mod.draw)
+    $loc.clear = new Sk.builtin.func(function(self) {
+      app.destroy();
+    })
+    $loc.fill = new Sk.builtin.func(function(self, color) {
+      app.renderer.backgroundColor = transColor(color.v);
+    })
+  }, 'Screen', []));
   // 时间类
   mod.clock = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
     $loc.__init__ = new Sk.builtin.func(function(self) {
@@ -406,6 +412,10 @@ window.$builtinmodule = function() {
     $loc.get_volume = new Sk.builtin.func(function(self) {
       return self.audio.volume;
     })
+    $loc.stop = new Sk.builtin.func(function(self, name) {
+      self.audio.currentTime = 0
+      self.audio.pause();
+    })
   }, 'Music', []));
 
   // 音效类
@@ -415,11 +425,11 @@ window.$builtinmodule = function() {
     })
     $loc.play = new Sk.builtin.func(function(self, name) {
       if(self.soundMap[name.v]) {
-        self.soundMap[name.v].currentTime = 0
         self.soundMap[name.v].play()
+        self.soundMap[name.v].currentTime = 0
       } else {
         const audio = new Audio()
-        audio.src = name.v || `./assets/${name.v}.mp3`;
+        audio.src = name.v;
         audio.loop = false;
         audio.play();
         self.soundMap[name.v] = audio
@@ -480,52 +490,99 @@ window.$builtinmodule = function() {
 
   // 主循环
   app.ticker.add((delta) => {
-    // console.log(Sk.globals.update)
     Sk.globals.update && Sk.misceval.callsimAsync(null, Sk.globals.update);
   });
+
+  const keys = ["K_0", "K_1", "K_2", "K_3", "K_4", "K_5", "K_6", "K_7", "K_8", "K_9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "SHIFT", "CTRL", "ALT", "LEFT", "UP", "RIGHT", "DOWN", "PAGEUP", "PAGEDOWN", "END", "HOME", "ESCAPE", "ENTER", "SPACE", "RETURN", "BACKSPACE", "INSERT", "DELETE", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15"];
+  const nativeKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'Shift', 'Ctrl', 'Alt', 'ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown', 'PageUp', 'PageDown', 'End', 'Home', 'Escape', 'Enter', '', 'Return', 'Backspace', 'Insert', 'Delete', "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15"]
+  const keysMap = {}
+  nativeKeys.map((nativeKeys, index) => {
+    keysMap[nativeKeys] = keys[index]
+  })
+  const keyboard = {};
   
   // 键盘按下事件
   window.addEventListener('keydown', function(e) {
-    keyboard[e.key] = true
-    Sk.globals.on_key_down && Sk.misceval.callsimAsync(null, Sk.globals.on_key_down, Sk.ffi.remapToPy(e.key));
+    keyboard[keysMap[e.key]] = true
+    Sk.globals.on_key_down && Sk.misceval.callsimAsync(null, Sk.globals.on_key_down, Sk.ffi.remapToPy(keysMap[e.key]));
   })
   window.addEventListener('keyup', function(e) {
-    keyboard[e.key] = false
-    Sk.globals.on_key_down && Sk.misceval.callsimAsync(null, Sk.globals.on_key_down, Sk.ffi.remapToPy(e.key));
+    keyboard[keysMap[e.key]] = false
+    Sk.globals.on_key_down && Sk.misceval.callsimAsync(null, Sk.globals.on_key_down, Sk.ffi.remapToPy(keysMap[e.key]));
   })
+  // 键盘名称
+  mod.Keys = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
+    keys.map((key) => {
+      $loc[key] = defineGetter(() => Sk.ffi.remapToPy(key))
+    })
+  }, 'Keys', []));
+  // 键盘按下
+  mod.keyboard = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
+    keys.map((key, i) => {
+      $loc[key.toLowerCase()] = defineGetter(() => keyboard[key] || false)
+    })
+  }, 'keyboard', []));
+  
+  const mouseDownMap = {
+    '0': 'LEFT',
+    '1': 'MIDDLE',
+    '2': 'RIGHT',
+  }
+  let mousePos = {};
+  const mouse = {};
   // 鼠标按下事件
   app.view.addEventListener('mousedown', function(e) {
+    mouse[mouseDownMap[e.button]] = true
     Sk.globals.on_mouse_down && Sk.misceval.callsimAsync(null, Sk.globals.on_mouse_down, Sk.ffi.remapToPy([
       transX(e.offsetX, true),
       transY(e.offsetY, true),
-    ]));
+    ]), Sk.ffi.remapToPy(mouseDownMap[e.button]));
   })
   // 鼠标抬起事件
   app.view.addEventListener('mouseup', function(e) {
+    mouse[mouseDownMap[e.button]] = false
     Sk.globals.on_mouse_up && Sk.misceval.callsimAsync(null, Sk.globals.on_mouse_up, Sk.ffi.remapToPy([
       transX(e.offsetX, true),
       transY(e.offsetY, true),
-    ]));
+    ]), Sk.ffi.remapToPy(mouseDownMap[e.button]));
   })
+  // 禁用鼠标右键
+  document.oncontextmenu = function(){
+    return false;
+  }
   // 鼠标移动事件
-  window.addEventListener('mousemove', function(e) {
+  app.view.addEventListener('mousemove', function(e) {
     mousePos = {
       x: transX(e.offsetX, true),
       y: transY(e.offsetY, true),
     }
-    Sk.globals.on_mouse_move && Sk.misceval.callsimAsync(null, Sk.globals.on_mouse_move, Sk.ffi.remapToPy([mousePos.x, mousePos.y]));
+    Sk.globals.on_mouse_move && Sk.misceval.callsimAsync(null, Sk.globals.on_mouse_move, Sk.ffi.remapToPy([mousePos.x, mousePos.y])), Sk.ffi.remapToPy(mouseDownMap[e.button]);
   })
+  // 鼠标滚轮事件
+  app.view.addEventListener('wheel', function(e) {
+    if (e.deltaY > 0) {
+      mouse['WHEEL_DOWN'] = true;
+      mouse['WHEEL_UP'] = false;
+    } else if (e.deltaY < 0) {
+      mouse['WHEEL_UP'] = true;
+      mouse['WHEEL_DOWN'] = false;
+    } else {
+      mouse['WHEEL_UP'] = false;
+      mouse['WHEEL_DOWN'] = false;
+    }
+  })
+  
   // 鼠标位置
   mod.mouse = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
     $loc.x = defineGetter(() => mousePos.x)
     $loc.y = defineGetter(() => mousePos.y)
     $loc.pos = defineGetter(() => Sk.ffi.remapToPy([mousePos.x, mousePos.y]))
+    $loc.LEFT = defineGetter(() => mouse.LEFT || false)
+    $loc.MIDDLE = defineGetter(() => mouse.MIDDLE || false)
+    $loc.RIGHT = defineGetter(() => mouse.RIGHT || false)
+    $loc.WHEEL_UP = defineGetter(() => mouse.WHEEL_UP || false)
+    $loc.WHEEL_DOWN = defineGetter(() => mouse.WHEEL_DOWN || false)
   }, 'Mouse', []));
-  // 键盘按下
-  mod.keyboard = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
-    $loc.Left = defineGetter(() => keyboard['ArrowLeft'] || false)
-    $loc.Right = defineGetter(() => keyboard['ArrowRight'] || false)
-  }, 'keyboard', []));
 
   return mod;
 };
