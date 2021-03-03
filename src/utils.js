@@ -1,3 +1,28 @@
+export function loadScript(src, varName){
+  if (window[varName]) {
+    return Promise.resolve(window[varName]);
+  }
+  const res = new Promise(function(resolve, reject) {
+    const el = document.createElement('script');
+    el.onload = function() {
+      resolve(varName && window.varName);
+    };
+
+    el.onerror = function(e) {
+      el.onload = null;
+      el.onerror = null;
+      document.body.removeChild(el);
+      reject(e);
+    };
+    el.src = src;
+    el.async = true;
+    console.log(document.body)
+    document.body.appendChild(el);
+  });
+  return res;
+}
+
+
 // 碰撞检测函数
 export function hitTestRectangle(r1, r2) {
   // 如果r2是坐标点
@@ -59,11 +84,6 @@ export function hitTestRectangle(r1, r2) {
 
 // 加载纹理
 const JsonLoadedMap = {};
-window.PIXI.loader.pre((resource, next) => {
-  resource.crossOrigin = 'anonymous';
-  resource.loadType = window.PIXI.loaders.Resource.LOAD_TYPE.XHR;
-  next();
-});
 export function textureRecources (resource) {
   function loadResource(resource) {
     let list;
@@ -136,3 +156,4 @@ export const defineProperty = function(obj, property) {
   }))
 }
   
+

@@ -1,7 +1,6 @@
 const Sk = window.Sk;
 const PIXI = window.PIXI;
-import {textureRecources, defineGetter, defineProperty, hitTestRectangle, genkwaFunc} from './utils'
-
+import {loadScript, textureRecources, defineGetter, defineProperty, hitTestRectangle, genkwaFunc} from './utils'
 // 17中标准颜色名对应的色值
 const ColorNameMap = {
   aqua: '#00FFFF',
@@ -40,7 +39,11 @@ window.$builtinmodule = function() {
     Graphics = PIXI.Graphics,
     Text = PIXI.Text,
     TextStyle = PIXI.TextStyle;
-  
+  window.PIXI.loader.pre((resource, next) => {
+    resource.crossOrigin = 'anonymous';
+    resource.loadType = window.PIXI.loaders.Resource.LOAD_TYPE.XHR;
+    next();
+  });
   if (window.PGZApp) {
     // document.getElementById('stage').removeChild(window.PGZApp.view);
     window.PGZApp.destroy({
@@ -54,8 +57,10 @@ window.$builtinmodule = function() {
     height: 400,
   });
   const app = window.PGZApp;
+ 
   const halfWidth = Math.round(app.view.width/2);
   const halfHeight = Math.round(app.view.height/2);
+  // 笛卡尔坐标系转换
   function transX(x, isReserve) {
     // if (isReserve) {
     //   return x - halfWidth
@@ -64,6 +69,7 @@ window.$builtinmodule = function() {
     // }
     return x;
   }
+  // 笛卡尔坐标系转换
   function transY(y, isReserve) {
     // if (isReserve) {
     //   if (y > halfHeight) {
@@ -86,7 +92,7 @@ window.$builtinmodule = function() {
     }
     return [transX(pos[0], isReserve), transY(pos[1], isReserve)]
   }
-  
+  // 字符串色值转十六进制数字
   function transColor(color) {
     if (Array.isArray(color)) {
       return utils.rgb2hex(color);
@@ -453,29 +459,44 @@ window.$builtinmodule = function() {
       const y = transY(kwa.y) || actor.sprite.y;
       const pos = transPos(targets) || transPos(kwa.pos) || [x, y];
       return new Sk.misceval.promiseToSuspension(new Promise(function(resolve) {
-        loadScript('https://cdn.jsdelivr.net/gh/kittykatattack/charm/bin/Charm.js', 'Charm').then(() => {
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js', 'Charm').then(() => {
           if (!charm) {
-            charm = new Charm(PIXI);
+            // charm = new TWEEN(PIXI);
             app.ticker.add(() => {
-              charm.update()
+              // charm.update()
+              TWEEN.update();
             })
           }
           const tweenMap = {
-            linear: 'linear', // 线性
-            accelerate: 'acceleration', // 加速
-            decelerate: 'deceleration', // 减速
-            accel_decel: 'accelerationCubed', // 先加速再加速
-            elastic_start: 'bounce 10 0', // 开始时反弹
-            elastic_end: "bounce 0 -10", // 结束时反弹
-            elastic_start_end: "bounce 10 -10", // 开始结束都反弹
-            bounce_start: "bounce 10 0", // 开始时弹跳
-            bounce_end: "bounce 0 10", // 结束时弹跳
-            bounce_start_end: "bounce 10 -10", // 开始和结束都弹跳
+            linear: TWEEN.Easing.linear, // 线性
+            accelerate: TWEEN.Easing.Quartic.Out, // 加速
+            decelerate: TWEEN.Easing.Quartic.In, // 减速
+            accel_decel: TWEEN.Easing.Quartic.InOut, // 先加速再加速
+            elastic_start: TWEEN.Easing.Elastic.In, // 开始时反弹
+            elastic_end: TWEEN.Easing.Elastic.Out, // 结束时反弹
+            elastic_start_end: TWEEN.Easing.Elastic.InOut, // 开始结束都反弹
+            bounce_start: TWEEN.Easing.Bounce.In, // 开始时弹跳
+            bounce_end: TWEEN.Easing.Bounce.Out, // 结束时弹跳
+            bounce_start_end: TWEEN.Easing.Bounce.InOut, // 开始和结束都弹跳
           }
-          self.ani = charm.slide(actor.sprite, pos[0] || x, pos[1] || y, duration * 60, tweenMap[tween])
+          self.ani = new TWEEN.Tween({
+            x: actor.sprite.x,
+            y: actor.sprite.y,
+          }).to({
+            x: pos[0] || x,
+            y: pos[1] || y,
+          }, duration * 1000).easing(tweenMap[tween])
+          .onUpdate(function (object) {
+            actor.sprite.y = object.y;
+            actor.sprite.x = object.x;
+          }).start();
           self.ani.onComplete = function() {
             on_finished && Sk.misceval.callsim(on_finished)
           }
+          // self.ani = charm.slide(actor.sprite, pos[0] || x, pos[1] || y, duration * 60, tweenMap[tween])
+          // self.ani.onComplete = function() {
+          //   on_finished && Sk.misceval.callsim(on_finished)
+          // }
           resolve();
         })
     }));
