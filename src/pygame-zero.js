@@ -117,16 +117,17 @@ window.$builtinmodule = function() {
   // 角色类
   mod.Actor = Sk.misceval.buildClass(mod, function($gbl, $loc) {
     // $loc.__init__就是构造器
-    $loc.__init__ = new Sk.builtin.func(function(self, actorName) {
+    $loc.__init__ = new Sk.builtin.func(function(self, actorName, pos) {
       return new Sk.misceval.promiseToSuspension(new Promise(function(resolve) {
         actorName = Sk.ffi.remapToJs(actorName);
+        pos = Sk.ffi.remapToJs(pos) || [];
         textureRecources(actorName || `./assets/${actorName.v}/index.json`).then(function(texture) {
           const sprite = new Sprite(texture)
           sprite.zOrder=1
           self.sprite = sprite;
           self.sprite.anchor.set(0.5);
-          self.sprite.x = transX(0)
-          self.sprite.y = transY(0)
+          self.sprite.x = transX(pos[0] || 0)
+          self.sprite.y = transY(pos[1] || 0)
           self.actorName = actorName;
           app.stage.addChild(sprite);
           resolve()

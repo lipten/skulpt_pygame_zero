@@ -62,8 +62,35 @@ https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero@master/dist/main.js
    ```javascript
    PyGameZero.setContainer(document.getElementById('stage'))
    ```
+---
 
+Copy the code of [test.py](https://github.com/lipten/skulpt-pygame-zero/blob/master/test.py) for testing
 
+### What is the difference between skulpt-pygame-zero and pygame-zero
+
+1. Image resources can only be loaded via links
+
+   ```
+   Actor('https://static.lipten.link/blogs/pig1.png')
+   ```
+
+2. You can also pass in multiple pictures
+
+   ```
+   pig = Actor(('https://static.lipten.link/blogs/pig1.png','https://static.lipten.link/blogs/pig2.png'))
+   
+   # then ute frame=2 to switch the second photo
+   pig.frame = 2
+   ```
+
+### Below is the unimplemented pygame-zero api
+
+* images
+* music.fadeout
+* music.queue
+* Actor keyword argument: pos, topleft, topright, bottomleft, bottomright, midtop, midleft, midright, midbottom or center
+* Anchor point
+* Tone Generator
 
 ## Building
 
@@ -75,4 +102,3 @@ https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero@master/dist/main.js
 parcel build src/main.js --experimental-scope-hoisting
 parcel build src/pygame-zero.js
 ```
-
