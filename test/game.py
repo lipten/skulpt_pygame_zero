@@ -1,4 +1,4 @@
-from pgzero import *
+from pgzrun import *
 import random
 pen = screen.draw
 resources = {
@@ -16,11 +16,13 @@ half_height = HEIGHT/2
 bg=Actor(resources['bg'])
 bg.width = WIDTH
 bg.height = HEIGHT
+bg.draw()
 bg.pos = half_width, half_height
 pig = Actor((resources['pig2'], resources['pig1']), (half_width, half_height+120))
 pig.pos = half_width, half_height+120
 pig.width = 180
 pig.height = 140
+pig.draw()
 
 money_list = []
 music.play(resources['bgm'])
@@ -32,6 +34,7 @@ game_end = False
 class Money:
     def __init__(self, x, y, speed):
         self.money = Actor(resources['money'])
+        self.money.draw()
         self.money.x = x
         self.money.y = y
         self.money.width = 60
@@ -102,9 +105,11 @@ def on_key_down(key):
 
 def on_mouse_down(pos, button):
     x, y = pos
-    if mouse.LEFT:
+    if mouse.LEFT == button:
         pig.frame = 2
         pig.x -= 50
-    elif mouse.RIGHT:
+    elif mouse.RIGHT == button:
         pig.frame = 1
         pig.x += 50
+
+go()

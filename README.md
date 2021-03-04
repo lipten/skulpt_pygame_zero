@@ -64,7 +64,7 @@ https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero@master/dist/main.js
    ```
 ---
 
-Copy the code of [test.py](https://github.com/lipten/skulpt-pygame-zero/blob/master/test.py) for testing
+Copy the code of [test/simple.py](https://github.com/lipten/skulpt-pygame-zero/blob/master/test/simple.py) for testing
 
 ### What is the difference between skulpt-pygame-zero and pygame-zero
 

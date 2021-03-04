@@ -49,6 +49,7 @@ window.$builtinmodule = function() {
     window.PGZApp.destroy({
       removeView: true
     });
+    loader.destroy();
     window.PGZApp = void 0;
   }
   window.PGZApp = new Application({
@@ -129,7 +130,6 @@ window.$builtinmodule = function() {
           self.sprite.x = transX(pos[0] || 0)
           self.sprite.y = transY(pos[1] || 0)
           self.actorName = actorName;
-          app.stage.addChild(sprite);
           resolve()
         })
       }));
@@ -199,11 +199,16 @@ window.$builtinmodule = function() {
     $loc.collide_actor = new Sk.builtin.func(function(self, actor) {
       return hitTestRectangle(self.sprite, actor.sprite)
     })
+    $loc.colliderect = new Sk.builtin.func(function(self, actor) {
+      return hitTestRectangle(self.sprite, actor.sprite)
+    })
     $loc.remove = new Sk.builtin.func(function(self) {
       app.stage.removeChild(self.sprite);
     })
+    $loc.draw = new Sk.builtin.func(function(self) {
+      app.stage.addChild(self.sprite);
+    })
   }, 'Actor')
-
   // 矩形类
   mod.Rect = Sk.misceval.buildClass(mod, function($gbl, $loc) {
     // $loc.__init__就是构造器
@@ -232,10 +237,10 @@ window.$builtinmodule = function() {
     $loc.size = new Sk.builtin.func(function(self, size) {
       self.size = size.v;
     })
-    $loc.fill = new Sk.builtin.func(function(self, color) {
-      color = transColor(Sk.ffi.remapToJs(color));
-      graph.beginFill(color)
-    })
+    // $loc.fill = new Sk.builtin.func(function(self, color) {
+    //   color = transColor(Sk.ffi.remapToJs(color));
+    //   graph.beginFill(color)
+    // })
     $loc.line =  new Sk.builtin.func(function(self, start, end, color) {
       color = transColor(Sk.ffi.remapToJs(color));
       start = Sk.ffi.remapToJs(start);
@@ -348,13 +353,19 @@ window.$builtinmodule = function() {
     }, true))
   }, 'Draw', []);
   // 屏幕类
+  
   mod.screen = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
     $loc.draw = Sk.misceval.callsimOrSuspend(mod.draw)
     $loc.clear = new Sk.builtin.func(function(self) {
-      app.destroy();
+      // app.destroy();
+      while(app.stage.children.length > 0){   var child = app.stage.getChildAt(0);  app.stage.removeChild(child);}
     })
     $loc.fill = new Sk.builtin.func(function(self, color) {
-      app.renderer.backgroundColor = transColor(color.v);
+      graph.clear()
+      graph.beginFill(transColor(Sk.ffi.remapToJs(color)), 1);
+      graph.drawRect(0, 0, app.view.width, app.view.height);
+      graph.endFill();
+      app.stage.addChild(graph);
     })
   }, 'Screen', []));
   // 时间类
@@ -512,6 +523,7 @@ window.$builtinmodule = function() {
 
   // 主循环
   app.ticker.add((delta) => {
+    Sk.globals.draw && Sk.misceval.callsimAsync(null, Sk.globals.draw);
     Sk.globals.update && Sk.misceval.callsimAsync(null, Sk.globals.update);
   });
 
@@ -552,17 +564,31 @@ window.$builtinmodule = function() {
   }
   let mousePos = {};
   const mouse = {};
+  let buttons = [];
+  const insertData = function(arr, data) {
+    if (data && !~arr.indexOf(data)) {
+      arr.push(data)
+    }
+  }
+  const delData = function(arr, data) {
+    const index = arr.indexOf(data)
+    if (~index) {
+      arr.splice(index, 1)
+    }
+  }
   // 鼠标按下事件
   app.view.addEventListener('mousedown', function(e) {
-    mouse[mouseDownMap[e.button]] = true
+    const button = (mouseDownMap[e.button] || '').toLowerCase()
+    insertData(buttons, button)
     Sk.globals.on_mouse_down && Sk.misceval.callsimAsync(null, Sk.globals.on_mouse_down, Sk.ffi.remapToPy([
       transX(e.offsetX, true),
       transY(e.offsetY, true),
-    ]), Sk.ffi.remapToPy(mouseDownMap[e.button]));
+    ]), Sk.ffi.remapToPy(button));
   })
   // 鼠标抬起事件
   app.view.addEventListener('mouseup', function(e) {
-    mouse[mouseDownMap[e.button]] = false
+    const button = (mouseDownMap[e.button] || '').toLowerCase()
+    delData(buttons, button)
     Sk.globals.on_mouse_up && Sk.misceval.callsimAsync(null, Sk.globals.on_mouse_up, Sk.ffi.remapToPy([
       transX(e.offsetX, true),
       transY(e.offsetY, true),
@@ -578,19 +604,25 @@ window.$builtinmodule = function() {
       x: transX(e.offsetX, true),
       y: transY(e.offsetY, true),
     }
-    Sk.globals.on_mouse_move && Sk.misceval.callsimAsync(null, Sk.globals.on_mouse_move, Sk.ffi.remapToPy([mousePos.x, mousePos.y])), Sk.ffi.remapToPy(mouseDownMap[e.button]);
+    Sk.globals.on_mouse_move && Sk.misceval.callsimAsync(
+      null,
+      Sk.globals.on_mouse_move,
+      Sk.ffi.remapToPy([mousePos.x, mousePos.y]),
+      Sk.ffi.remapToPy([mousePos.x, mousePos.y]),
+      Sk.ffi.remapToPy(buttons)
+      );
   })
   // 鼠标滚轮事件
   app.view.addEventListener('wheel', function(e) {
     if (e.deltaY > 0) {
-      mouse['WHEEL_DOWN'] = true;
-      mouse['WHEEL_UP'] = false;
+      insertData(buttons, 'wheel_down')
+      delData(buttons, 'wheel_up')
     } else if (e.deltaY < 0) {
-      mouse['WHEEL_UP'] = true;
-      mouse['WHEEL_DOWN'] = false;
+      insertData(buttons, 'wheel_up')
+      delData(buttons, 'wheel_down')
     } else {
-      mouse['WHEEL_UP'] = false;
-      mouse['WHEEL_DOWN'] = false;
+      delData(buttons, 'wheel_up')
+      delData(buttons, 'wheel_down')
     }
   })
   
@@ -599,12 +631,15 @@ window.$builtinmodule = function() {
     $loc.x = defineGetter(() => mousePos.x)
     $loc.y = defineGetter(() => mousePos.y)
     $loc.pos = defineGetter(() => Sk.ffi.remapToPy([mousePos.x, mousePos.y]))
-    $loc.LEFT = defineGetter(() => mouse.LEFT || false)
-    $loc.MIDDLE = defineGetter(() => mouse.MIDDLE || false)
-    $loc.RIGHT = defineGetter(() => mouse.RIGHT || false)
-    $loc.WHEEL_UP = defineGetter(() => mouse.WHEEL_UP || false)
-    $loc.WHEEL_DOWN = defineGetter(() => mouse.WHEEL_DOWN || false)
+    $loc.LEFT = Sk.ffi.remapToPy('left')
+    $loc.MIDDLE =  Sk.ffi.remapToPy('middle')
+    $loc.RIGHT =  Sk.ffi.remapToPy('right')
+    $loc.WHEEL_UP =  Sk.ffi.remapToPy('wheel_up')
+    $loc.WHEEL_DOWN =  Sk.ffi.remapToPy('wheel_down')
   }, 'Mouse', []));
+
+  mod.go =  new Sk.builtin.func(function(self) {
+  })
 
   return mod;
 };
