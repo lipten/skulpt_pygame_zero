@@ -1,6 +1,9 @@
 const Sk = window.Sk;
 const PIXI = window.PIXI;
 import {loadScript, textureRecources, defineGetter, defineProperty, hitTestRectangle, genkwaFunc} from './utils'
+import { PixiMatter, PhysicsSprite, PhysicsGraphics } from './matter-pixi';
+const pixiMatter = new PixiMatter();
+
 // 17中标准颜色名对应的色值
 const ColorNameMap = {
   aqua: '#00FFFF',
@@ -137,12 +140,20 @@ window.$builtinmodule = function() {
     $loc.x = defineProperty(function(self){
       return Sk.ffi.remapToPy(transX(self.sprite.x, true))
     }, function(self, val){
-      self.sprite.x = transX(val.v)
+      if (self.physicSprite) {
+        Matter.Body.setPosition(self.physicSprite._body, {x: transX(val.v), y: self.physicSprite.y})
+      } else {
+        self.sprite.x = transX(val.v)
+      }
     })
     $loc.y = defineProperty(function(self){
       return Sk.ffi.remapToPy(transY(self.sprite.y, true))
     }, function(self, val){
-      self.sprite.y = transY(val.v)
+      if (self.physicSprite) {
+        Matter.Body.setPosition(self.physicSprite._body, {x: self.physicSprite.x, y: transX(val.v)})
+      } else {
+        self.sprite.y = transX(val.v)
+      }
     })
     $loc.width = defineProperty('sprite', 'width')
     $loc.height = defineProperty('sprite', 'height')
@@ -150,9 +161,15 @@ window.$builtinmodule = function() {
       return Sk.ffi.remapToPy(transPos([self.sprite.x, self.sprite.y], true))
     }, function (self, val) {
       const pos = transPos(Sk.ffi.remapToJs(val))
-      self.sprite.x = pos[0];
-      self.sprite.y = pos[1];
-      self['sprite']['pos'] = [pos[0], pos[1]];
+      const [x, y] = pos;
+      if (self.physicSprite) {
+        Matter.Body.setPosition(self.physicSprite._body, {x: x, y: y})
+      } else {
+        self.sprite.x = x;
+        self.sprite.y = y;
+        self['sprite']['pos'] = [x, y];
+      }
+      
     })
     $loc.angle = defineProperty('sprite', 'angle')
     $loc.show  = defineProperty('sprite', 'visible')
@@ -206,8 +223,34 @@ window.$builtinmodule = function() {
       app.stage.removeChild(self.sprite);
     })
     $loc.draw = new Sk.builtin.func(function(self) {
-      app.stage.addChild(self.sprite);
+      app.stage.addChild(self.physicSprite || self.sprite);
     })
+    // 物理引擎
+    $loc.physicsImpostor = new Sk.builtin.func(genkwaFunc(function(args, kwa) {
+      // args = Sk.ffi.remapToJs(args);
+      kwa = Sk.ffi.remapToJs(kwa);
+      let [self, is_circle] = args;
+      is_circle = Sk.ffi.remapToJs(is_circle || kwa.is_circle) || false;
+      const {x, y, width, height, texture} = self.sprite
+      texture.trim = new PIXI.Rectangle(0, 0, width*2, height*2);
+      self.physicSprite = new PhysicsSprite(texture, {
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+        isCircle: is_circle
+      })
+      console.log(self.physicSprite._body)
+      const ground = new PhysicsGraphics({ x: 0, y: 300, width: 500, height: 50, fill: 0xff0000 }, { isStatic: true,angle: Math.PI * 0.06 });
+      app.stage.addChild(ground);
+      pixiMatter.addToWorld(self.physicSprite, ground);
+      // app.ticker.add((delta) => {
+        // console.log(self.physicSprite._body.velocity.y)
+        // console.log(self.physicSprite._body.speed)
+      // });
+      // app.stage.addChild(self.physicSprite);
+      // app.stage.removeChild(self.sprite);
+    }, true))
   }, 'Actor')
   // 矩形类
   mod.Rect = Sk.misceval.buildClass(mod, function($gbl, $loc) {
@@ -525,6 +568,7 @@ window.$builtinmodule = function() {
   app.ticker.add((delta) => {
     Sk.globals.draw && Sk.misceval.callsimAsync(null, Sk.globals.draw);
     Sk.globals.update && Sk.misceval.callsimAsync(null, Sk.globals.update);
+    pixiMatter.update()
   });
 
   const keys = ["K_0", "K_1", "K_2", "K_3", "K_4", "K_5", "K_6", "K_7", "K_8", "K_9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "SHIFT", "CTRL", "ALT", "LEFT", "UP", "RIGHT", "DOWN", "PAGEUP", "PAGEDOWN", "END", "HOME", "ESCAPE", "ENTER", "SPACE", "RETURN", "BACKSPACE", "INSERT", "DELETE", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15"];

@@ -1,8 +1,8 @@
 import {loadScript} from './utils'
 const Sk = window.Sk;
 const libList = {
-  // "./pgzrun/__init__.js": "./dist/pygame-zero.js",
-  "./pgzrun/__init__.js": "https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero/dist/pygame-zero.js",
+  "./pgzrun/__init__.js": "./dist/pygame-zero.js",
+  // "./pgzrun/__init__.js": "https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero/dist/pygame-zero.js",
 }
 export const PyGameZero = {
   load: function(file) {

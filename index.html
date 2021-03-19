@@ -1,12 +1,13 @@
 <html>
   <head>
-    <script src="https://cdn.jsdelivr.net/gh/skulpt/skulpt-dist/skulpt.min.js" type="text/javascript"></script>
-    <script src="https://cdn.jsdelivr.net/gh/skulpt/skulpt-dist/skulpt-stdlib.js" type="text/javascript"></script>
+    <script src="./skulpt/skulpt.min.js" type="text/javascript"></script>
+    <script src="./skulpt/skulpt-stdlib.js" type="text/javascript"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.59.2/codemirror.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.59.2/mode/python/python.min.js"></script>
     <link href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.59.2/codemirror.css" rel="stylesheet">
     <link href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.59.2/theme/idea.min.css" rel="stylesheet">
     <script src="./dist/main.js"></script>
+    <script src="./node_modules/matter-js/build/matter.min.js"></script>
     <style>
       .CodeMirror {
         height: 800px;
@@ -39,7 +40,6 @@
     </form>
     <pre id="output"></pre>
     <div id="stage"></div>
-    
     <script>
       var editor = CodeMirror.fromTextArea(document.getElementById('yourcode'), {
         lineNumbers: true,
@@ -77,7 +77,7 @@
       }
       // 配置容器
       PyGameZero.setContainer(document.getElementById('stage'))
-      fetch('./test/game.py').then((res) =>  res.text()).then((text) => {
+      fetch('./test/physics.py').then((res) =>  res.text()).then((text) => {
         editor.setValue(text);
         document.getElementById('run').onclick = function() {
           var prog = editor.getValue();
