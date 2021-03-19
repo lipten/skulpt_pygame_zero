@@ -99,7 +99,7 @@
               console.log("success");
             },
             function(err) {
-              // console.log(err);
+              console.error(err);
               var mypre = document.getElementById("output");
               mypre.innerHTML = mypre.innerHTML + err;
             }

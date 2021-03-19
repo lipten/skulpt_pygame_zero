@@ -157,6 +157,15 @@ window.$builtinmodule = function() {
     })
     $loc.width = defineProperty('sprite', 'width')
     $loc.height = defineProperty('sprite', 'height')
+    $loc.size = defineProperty(function(self) {
+      return Sk.ffi.remapToPy([self.sprite.width, self.sprite.height])
+    }, function (self, val) {
+      const pos = Sk.ffi.remapToJs(val)
+      const [width, height] = pos;
+      self.sprite.width = width;
+      self.sprite.height = height;
+      self['sprite']['pos'] = [width, height];
+    })
     $loc.pos = defineProperty(function(self) {
       return Sk.ffi.remapToPy(transPos([self.sprite.x, self.sprite.y], true))
     }, function (self, val) {
@@ -232,7 +241,6 @@ window.$builtinmodule = function() {
       let [self, is_circle] = args;
       is_circle = Sk.ffi.remapToJs(is_circle || kwa.is_circle) || false;
       const {x, y, width, height, texture} = self.sprite
-      texture.trim = new PIXI.Rectangle(0, 0, width*2, height*2);
       self.physicSprite = new PhysicsSprite(texture, {
         x: x,
         y: y,
@@ -240,16 +248,9 @@ window.$builtinmodule = function() {
         height: height,
         isCircle: is_circle
       })
-      console.log(self.physicSprite._body)
-      const ground = new PhysicsGraphics({ x: 0, y: 300, width: 500, height: 50, fill: 0xff0000 }, { isStatic: true,angle: Math.PI * 0.06 });
-      app.stage.addChild(ground);
-      pixiMatter.addToWorld(self.physicSprite, ground);
-      // app.ticker.add((delta) => {
-        // console.log(self.physicSprite._body.velocity.y)
-        // console.log(self.physicSprite._body.speed)
-      // });
-      // app.stage.addChild(self.physicSprite);
-      // app.stage.removeChild(self.sprite);
+      // const ground = new PhysicsGraphics({ x: 0, y: 300, width: 500, height: 50, fill: 0xff0000 }, { isStatic: true,angle: Math.PI * 0.06 });
+      // app.stage.addChild(ground);
+      pixiMatter.addToWorld(self.physicSprite);
     }, true))
   }, 'Actor')
   // 矩形类
@@ -272,10 +273,10 @@ window.$builtinmodule = function() {
     $loc.size = defineGetter((self) => Sk.ffi.remapToPy(self.size))
   }, 'Rect', [])
   // 画笔类
-  const graph = new Graphics();
   mod.draw = Sk.misceval.buildClass(mod, function($gbl, $loc) {
     $loc.__init__ = new Sk.builtin.func(function(self) {
       self.size = 5;
+      self.graphMap = [];
     })
     $loc.size = new Sk.builtin.func(function(self, size) {
       self.size = size.v;
@@ -294,11 +295,19 @@ window.$builtinmodule = function() {
       app.stage.addChild(graph);
     })
     $loc.circle =  new Sk.builtin.func(function(self, pos, radius, color) {
-      color = transColor(Sk.ffi.remapToJs(color));
-      pos = transPos(Sk.ffi.remapToJs(pos));
-      graph.lineStyle(self.size, color, 1);
-      graph.drawCircle(pos[0], pos[1], radius.v);
-      app.stage.addChild(graph);
+      return Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
+        $loc.__init__ = new Sk.builtin.func(function(selfCircle) {
+          selfCircle.graph = new Graphics();
+          const graph = selfCircle.graph;
+          self.graphMap.push(graph)
+          color = transColor(Sk.ffi.remapToJs(color));
+          pos = transPos(Sk.ffi.remapToJs(pos));
+          graph.lineStyle(self.size, color, 1);
+          graph.drawCircle(pos[0], pos[1], radius.v);
+          
+          app.stage.addChild(graph);
+        })
+      }))
     })
     $loc.filled_circle =  new Sk.builtin.func(function(self, pos, radius, color) {
       color = transColor(Sk.ffi.remapToJs(color));
@@ -310,31 +319,58 @@ window.$builtinmodule = function() {
       app.stage.addChild(graph);
     })
     $loc.rect =  new Sk.builtin.func(function(self, ...args) {
-      if (Sk.abstr.typeName(args[0]) === "Rect") {
-        const [rect, color] = args;
-        graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
-        graph.drawRect(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
-        app.stage.addChild(graph);
-      } else {
-        let left, top
-        const leftTop = Sk.ffi.remapToJs(args[0])
-        if (Array.isArray(leftTop)) {
-          left = leftTop[0]
-          top = leftTop[1]
-          args.shift();
-        } else {
-          left = args[0].v
-          top = args[1].v
-          args.shift();
-          args.shift();
-        }
-        let [width, height, color] = args;
-        width = Sk.ffi.remapToJs(width)
-        height = Sk.ffi.remapToJs(height)
-        graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
-        graph.drawRect(transX(left), transY(top), width, height);
-        app.stage.addChild(graph);
-      }
+      return Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
+        $loc.__init__ = new Sk.builtin.func(function(selfRect) {
+          selfRect.graph = new Graphics();
+          const graph = selfRect.graph;
+          if (Sk.abstr.typeName(args[0]) === "Rect") {
+            const [rect, color] = args;
+            graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
+            graph.drawRect(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
+          } else {
+            let left, top
+            const leftTop = Sk.ffi.remapToJs(args[0])
+            if (Array.isArray(leftTop)) {
+              left = leftTop[0]
+              top = leftTop[1]
+              args.shift();
+            } else {
+              left = args[0].v
+              top = args[1].v
+              args.shift();
+              args.shift();
+            }
+            let [width, height, color] = args;
+            width = Sk.ffi.remapToJs(width)
+            height = Sk.ffi.remapToJs(height)
+            graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
+            graph.drawRect(transX(left), transY(top), width, height);
+            // setTimeout(() => {
+            //   graph.x = 200
+            // }, 2000)
+            app.stage.addChild(graph);
+          }
+        })
+        $loc.physicsImpostor = new Sk.builtin.func(genkwaFunc(function(args, kwa) {
+          kwa = Sk.ffi.remapToJs(kwa);
+          let [selfRect, is_static] = args;
+          is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
+          const {graphicsData, width, height, line} = selfRect.graph
+          selfRect.physicGraphics = new PhysicsGraphics({
+            x: graphicsData[0].shape.x,
+            y: graphicsData[0].shape.y,
+            width: width,
+            height: height,
+            lineWidth: line.width,
+            lineColor: line.color,
+          },{
+            isStatic: is_static,
+          })
+          pixiMatter.addToWorld(selfRect.physicGraphics);
+          app.stage.removeChild(selfRect.graph);
+          app.stage.addChild(selfRect.physicGraphics);
+        }, true))
+      }))
     })
     $loc.filled_rect =  new Sk.builtin.func(function(self, ...args) {
       if (Sk.abstr.typeName(args[0]) === "Rect") {
