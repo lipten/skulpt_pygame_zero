@@ -1,16 +1,18 @@
 from pgzrun import *
+import math
 
 resources = {
   'box': 'https://static.lipten.link/blogs/sprint-box.png',
   'ball': 'https://static.lipten.link/blogs/sprint-ball.png',
 }
 pen=draw()
-pen.circle((10, 100), 50, 'blue')
+circle = pen.circle((100, 100), 50, 'blue')
 ground = pen.rect((0,350),500,30, 'red')
+ground.rotation = math.pi / 8
 ground.physicsImpostor(True)
 
 box = Actor(resources['box'], (10, 10))
-box.size=50,50
+box.size= 50,50
 box.physicsImpostor()
 box.draw()
 

@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "parcel build src/main.js && parcel src/pygame-zero.js",
+    "start": "parcel build src/main.js && parcel src/pygame-zero.js -d ./dist",
     "server": "node server.js",
     "build": "parcel build src/main.js --experimental-scope-hoisting && parcel build src/pygame-zero.js"
   },

@@ -1,6 +1,6 @@
 const Sk = window.Sk;
 const PIXI = window.PIXI;
-import {loadScript, textureRecources, defineGetter, defineProperty, hitTestRectangle, genkwaFunc} from './utils'
+import {loadScript, textureRecources, defineGetter, defineProperty, hitTestRectangle, genkwaFunc, upgradeGraphics} from './utils'
 import { PixiMatter, PhysicsSprite, PhysicsGraphics } from './matter-pixi';
 const pixiMatter = new PixiMatter();
 
@@ -178,7 +178,6 @@ window.$builtinmodule = function() {
         self.sprite.y = y;
         self['sprite']['pos'] = [x, y];
       }
-      
     })
     $loc.angle = defineProperty('sprite', 'angle')
     $loc.show  = defineProperty('sprite', 'visible')
@@ -238,15 +237,17 @@ window.$builtinmodule = function() {
     $loc.physicsImpostor = new Sk.builtin.func(genkwaFunc(function(args, kwa) {
       // args = Sk.ffi.remapToJs(args);
       kwa = Sk.ffi.remapToJs(kwa);
-      let [self, is_circle] = args;
+      let [self, is_circle, is_static] = args;
       is_circle = Sk.ffi.remapToJs(is_circle || kwa.is_circle) || false;
+      is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
       const {x, y, width, height, texture} = self.sprite
       self.physicSprite = new PhysicsSprite(texture, {
         x: x,
         y: y,
         width: width,
         height: height,
-        isCircle: is_circle
+        isCircle: is_circle,
+        isStatic: is_static,
       })
       // const ground = new PhysicsGraphics({ x: 0, y: 300, width: 500, height: 50, fill: 0xff0000 }, { isStatic: true,angle: Math.PI * 0.06 });
       // app.stage.addChild(ground);
@@ -318,59 +319,34 @@ window.$builtinmodule = function() {
       graph.endFill();
       app.stage.addChild(graph);
     })
-    $loc.rect =  new Sk.builtin.func(function(self, ...args) {
-      return Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
-        $loc.__init__ = new Sk.builtin.func(function(selfRect) {
-          selfRect.graph = new Graphics();
-          const graph = selfRect.graph;
-          if (Sk.abstr.typeName(args[0]) === "Rect") {
-            const [rect, color] = args;
-            graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
-            graph.drawRect(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
-          } else {
-            let left, top
-            const leftTop = Sk.ffi.remapToJs(args[0])
-            if (Array.isArray(leftTop)) {
-              left = leftTop[0]
-              top = leftTop[1]
-              args.shift();
-            } else {
-              left = args[0].v
-              top = args[1].v
-              args.shift();
-              args.shift();
-            }
-            let [width, height, color] = args;
-            width = Sk.ffi.remapToJs(width)
-            height = Sk.ffi.remapToJs(height)
-            graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
-            graph.drawRect(transX(left), transY(top), width, height);
-            // setTimeout(() => {
-            //   graph.x = 200
-            // }, 2000)
-            app.stage.addChild(graph);
-          }
-        })
-        $loc.physicsImpostor = new Sk.builtin.func(genkwaFunc(function(args, kwa) {
-          kwa = Sk.ffi.remapToJs(kwa);
-          let [selfRect, is_static] = args;
-          is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
-          const {graphicsData, width, height, line} = selfRect.graph
-          selfRect.physicGraphics = new PhysicsGraphics({
-            x: graphicsData[0].shape.x,
-            y: graphicsData[0].shape.y,
-            width: width,
-            height: height,
-            lineWidth: line.width,
-            lineColor: line.color,
-          },{
-            isStatic: is_static,
-          })
-          pixiMatter.addToWorld(selfRect.physicGraphics);
-          app.stage.removeChild(selfRect.graph);
-          app.stage.addChild(selfRect.physicGraphics);
-        }, true))
-      }))
+    $loc.rect =  upgradeGraphics(mod, app, pixiMatter, (self, graph, ...args) => {
+      if (Sk.abstr.typeName(args[0]) === "Rect") {
+        const [rect, color] = args;
+        graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
+        graph.drawRect(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
+      } else {
+        let left, top
+        const leftTop = Sk.ffi.remapToJs(args[0])
+        if (Array.isArray(leftTop)) {
+          left = leftTop[0]
+          top = leftTop[1]
+          args.shift();
+        } else {
+          left = args[0].v
+          top = args[1].v
+          args.shift();
+          args.shift();
+        }
+        let [width, height, color] = args;
+        width = Sk.ffi.remapToJs(width)
+        height = Sk.ffi.remapToJs(height)
+        graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
+        graph.drawRect(transX(left), transY(top), width, height);
+        // setTimeout(() => {
+        //   graph.x = 200
+        // }, 2000)
+        app.stage.addChild(graph);
+      }
     })
     $loc.filled_rect =  new Sk.builtin.func(function(self, ...args) {
       if (Sk.abstr.typeName(args[0]) === "Rect") {
@@ -405,7 +381,8 @@ window.$builtinmodule = function() {
       }
     })
     $loc.clear = new Sk.builtin.func(function(self) {
-      graph.clear()
+      self.graphMap.map((graph) => graph.clear())
+      self.graphMap.length = 0
       self.basicText && self.basicText.destroy()
     })
     $loc.text = new Sk.builtin.func(genkwaFunc(function(args, kwa) {

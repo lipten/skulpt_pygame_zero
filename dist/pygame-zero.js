@@ -117,198 +117,7 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"utils.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.loadScript = loadScript;
-exports.hitTestRectangle = hitTestRectangle;
-exports.textureRecources = textureRecources;
-exports.genkwaFunc = genkwaFunc;
-exports.defineProperty = exports.defineGetter = void 0;
-
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-function loadScript(src, varName) {
-  if (window[varName]) {
-    return Promise.resolve(window[varName]);
-  }
-
-  var res = new Promise(function (resolve, reject) {
-    var el = document.createElement('script');
-
-    el.onload = function () {
-      resolve(varName && window.varName);
-    };
-
-    el.onerror = function (e) {
-      el.onload = null;
-      el.onerror = null;
-      document.body.removeChild(el);
-      reject(e);
-    };
-
-    el.src = src;
-    el.async = true;
-    console.log(document.body);
-    document.body.appendChild(el);
-  });
-  return res;
-} // 碰撞检测函数
-
-
-function hitTestRectangle(r1, r2) {
-  // 如果r2是坐标点
-  if (Array.isArray(r2)) {
-    r2.x = r2[0];
-    r2.y = r2[1];
-    r2.width = 0;
-    r2.height = 0;
-  } //Define the variables we'll need to calculate
-
-
-  var hit; //hit will determine whether there's a collision
-
-  hit = false; //Find the center points of each sprite
-
-  r1.centerX = r1.x + r1.width / 2;
-  r1.centerY = r1.y + r1.height / 2;
-  r2.centerX = r2.x + r2.width / 2;
-  r2.centerY = r2.y + r2.height / 2; //Find the half-widths and half-heights of each sprite
-
-  r1.halfWidth = r1.width / 2;
-  r1.halfHeight = r1.height / 2;
-  r2.halfWidth = r2.width / 2;
-  r2.halfHeight = r2.height / 2; //Calculate the distance vector between the sprites
-
-  var vx = r1.centerX - r2.centerX;
-  var vy = r1.centerY - r2.centerY; //Figure out the combined half-widths and half-heights
-
-  var combinedHalfWidths = r1.halfWidth + r2.halfWidth;
-  var combinedHalfHeights = r1.halfHeight + r2.halfHeight; //Check for a collision on the x axis
-
-  if (Math.abs(vx) < combinedHalfWidths) {
-    //A collision might be occuring. Check for a collision on the y axis
-    if (Math.abs(vy) < combinedHalfHeights) {
-      //There's definitely a collision happening
-      hit = true;
-    } else {
-      //There's no collision on the y axis
-      hit = false;
-    }
-  } else {
-    //There's no collision on the x axis
-    hit = false;
-  } //`hit` will be either `true` or `false`
-
-
-  return hit;
-} // 加载纹理
-
-
-var JsonLoadedMap = {};
-
-function textureRecources(resource) {
-  function loadResource(resource) {
-    var list;
-
-    if (Array.isArray(resource)) {
-      list = _toConsumableArray(resource);
-      resource = list[0];
-    }
-
-    return new Promise(function (resolve, reject) {
-      if (window.PIXI.utils.TextureCache[resource]) {
-        resolve(window.PIXI.utils.TextureCache[resource]);
-      } else {
-        console.log(list || resource);
-        window.PIXI.loader.add(list || resource).load(function () {
-          var texture = window.PIXI.loader.resources[resource].texture;
-          resolve(texture);
-        });
-      }
-    });
-  }
-
-  if (/\.json$/.test(resource)) {
-    if (JsonLoadedMap[resource]) {
-      return loadResource(JsonLoadedMap[resource]);
-    } else {
-      return fetch(resource).then(function (res) {
-        return res.json();
-      }).then(function (res) {
-        var prefix = resource.replace('index.json', '');
-        var resoureList = res.map(function (item) {
-          return prefix + item;
-        });
-        JsonLoadedMap[resource] = resoureList;
-        return loadResource(resoureList);
-      });
-    }
-  } else {
-    return loadResource(resource);
-  }
-}
-
-var Sk = window.Sk; // getter函数
-
-var defineGetter = function defineGetter(func) {
-  return Sk.misceval.callsimOrSuspend(Sk.builtins.property, new Sk.builtin.func(func), new Sk.builtin.func(function () {}));
-}; // 生成kwargs函数
-
-
-exports.defineGetter = defineGetter;
-
-function genkwaFunc(func, isJsArgs) {
-  var kwaFunc = function kwaFunc(kwa) {
-    for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      args[_key - 1] = arguments[_key];
-    }
-
-    if (!isJsArgs) {
-      args = new Sk.builtins['tuple'](args);
-      /*vararg*/
-    }
-
-    var kwargs = new Sk.builtin.dict(kwa);
-    return func(args, kwargs);
-  };
-
-  kwaFunc['co_kwargs'] = true;
-  return kwaFunc;
-} // 监听属性getter/setter
-
-
-var defineProperty = function defineProperty(obj, property) {
-  return Sk.misceval.callsimOrSuspend(Sk.builtins.property, new Sk.builtin.func(function (self) {
-    if (typeof obj === 'function') {
-      return obj(self);
-    } else {
-      return Sk.ffi.remapToPy(self[obj][property]);
-    }
-  }), new Sk.builtin.func(function (self, val) {
-    if (typeof property === 'function') {
-      property(self, val);
-    } else {
-      self[obj][property] = val.v;
-    }
-  }));
-};
-
-exports.defineProperty = defineProperty;
-},{}],"../node_modules/matter-js/build/matter.js":[function(require,module,exports) {
+})({"../node_modules/matter-js/build/matter.js":[function(require,module,exports) {
 var define;
 /*!
  * matter-js 0.16.1 by @liabru 2021-01-31
@@ -39322,7 +39131,268 @@ Object.defineProperty(exports, "PhysicsGraphics", {
     return physics_graphics_1.PhysicsGraphics;
   }
 });
-},{"./pixi-matter":"matter-pixi/pixi-matter.ts","./physics_objects/physics_sprite":"matter-pixi/physics_objects/physics_sprite.ts","./physics_objects/physics_graphics":"matter-pixi/physics_objects/physics_graphics.ts"}],"pygame-zero.js":[function(require,module,exports) {
+},{"./pixi-matter":"matter-pixi/pixi-matter.ts","./physics_objects/physics_sprite":"matter-pixi/physics_objects/physics_sprite.ts","./physics_objects/physics_graphics":"matter-pixi/physics_objects/physics_graphics.ts"}],"utils.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.loadScript = loadScript;
+exports.hitTestRectangle = hitTestRectangle;
+exports.textureRecources = textureRecources;
+exports.genkwaFunc = genkwaFunc;
+exports.upgradeGraphics = exports.defineProperty = exports.defineGetter = void 0;
+
+var _matterPixi = require("./matter-pixi");
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function loadScript(src, varName) {
+  if (window[varName]) {
+    return Promise.resolve(window[varName]);
+  }
+
+  var res = new Promise(function (resolve, reject) {
+    var el = document.createElement('script');
+
+    el.onload = function () {
+      resolve(varName && window.varName);
+    };
+
+    el.onerror = function (e) {
+      el.onload = null;
+      el.onerror = null;
+      document.body.removeChild(el);
+      reject(e);
+    };
+
+    el.src = src;
+    el.async = true;
+    console.log(document.body);
+    document.body.appendChild(el);
+  });
+  return res;
+} // 碰撞检测函数
+
+
+function hitTestRectangle(r1, r2) {
+  // 如果r2是坐标点
+  if (Array.isArray(r2)) {
+    r2.x = r2[0];
+    r2.y = r2[1];
+    r2.width = 0;
+    r2.height = 0;
+  } //Define the variables we'll need to calculate
+
+
+  var hit; //hit will determine whether there's a collision
+
+  hit = false; //Find the center points of each sprite
+
+  r1.centerX = r1.x + r1.width / 2;
+  r1.centerY = r1.y + r1.height / 2;
+  r2.centerX = r2.x + r2.width / 2;
+  r2.centerY = r2.y + r2.height / 2; //Find the half-widths and half-heights of each sprite
+
+  r1.halfWidth = r1.width / 2;
+  r1.halfHeight = r1.height / 2;
+  r2.halfWidth = r2.width / 2;
+  r2.halfHeight = r2.height / 2; //Calculate the distance vector between the sprites
+
+  var vx = r1.centerX - r2.centerX;
+  var vy = r1.centerY - r2.centerY; //Figure out the combined half-widths and half-heights
+
+  var combinedHalfWidths = r1.halfWidth + r2.halfWidth;
+  var combinedHalfHeights = r1.halfHeight + r2.halfHeight; //Check for a collision on the x axis
+
+  if (Math.abs(vx) < combinedHalfWidths) {
+    //A collision might be occuring. Check for a collision on the y axis
+    if (Math.abs(vy) < combinedHalfHeights) {
+      //There's definitely a collision happening
+      hit = true;
+    } else {
+      //There's no collision on the y axis
+      hit = false;
+    }
+  } else {
+    //There's no collision on the x axis
+    hit = false;
+  } //`hit` will be either `true` or `false`
+
+
+  return hit;
+} // 加载纹理
+
+
+var JsonLoadedMap = {};
+
+function textureRecources(resource) {
+  function loadResource(resource) {
+    var list;
+
+    if (Array.isArray(resource)) {
+      list = _toConsumableArray(resource);
+      resource = list[0];
+    }
+
+    return new Promise(function (resolve, reject) {
+      if (window.PIXI.utils.TextureCache[resource]) {
+        resolve(window.PIXI.utils.TextureCache[resource]);
+      } else {
+        console.log(list || resource);
+        window.PIXI.loader.add(list || resource).load(function () {
+          var texture = window.PIXI.loader.resources[resource].texture;
+          resolve(texture);
+        });
+      }
+    });
+  }
+
+  if (/\.json$/.test(resource)) {
+    if (JsonLoadedMap[resource]) {
+      return loadResource(JsonLoadedMap[resource]);
+    } else {
+      return fetch(resource).then(function (res) {
+        return res.json();
+      }).then(function (res) {
+        var prefix = resource.replace('index.json', '');
+        var resoureList = res.map(function (item) {
+          return prefix + item;
+        });
+        JsonLoadedMap[resource] = resoureList;
+        return loadResource(resoureList);
+      });
+    }
+  } else {
+    return loadResource(resource);
+  }
+}
+
+var Sk = window.Sk; // getter函数
+
+var defineGetter = function defineGetter(func) {
+  return Sk.misceval.callsimOrSuspend(Sk.builtins.property, new Sk.builtin.func(func), new Sk.builtin.func(function () {}));
+}; // 生成kwargs函数
+
+
+exports.defineGetter = defineGetter;
+
+function genkwaFunc(func, isJsArgs) {
+  var kwaFunc = function kwaFunc(kwa) {
+    for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
+
+    if (!isJsArgs) {
+      args = new Sk.builtins['tuple'](args);
+      /*vararg*/
+    }
+
+    var kwargs = new Sk.builtin.dict(kwa);
+    return func(args, kwargs);
+  };
+
+  kwaFunc['co_kwargs'] = true;
+  return kwaFunc;
+} // 监听属性getter/setter
+
+
+var defineProperty = function defineProperty(obj, property) {
+  return Sk.misceval.callsimOrSuspend(Sk.builtins.property, new Sk.builtin.func(function (self) {
+    if (typeof obj === 'function') {
+      return obj(self);
+    } else {
+      return Sk.ffi.remapToPy(self[obj][property]);
+    }
+  }), new Sk.builtin.func(function (self, val) {
+    if (typeof property === 'function') {
+      property(self, val);
+    } else {
+      self[obj][property] = val.v;
+    }
+  }));
+}; // 拓展graphics功能
+
+
+exports.defineProperty = defineProperty;
+
+var upgradeGraphics = function upgradeGraphics(mod, app, pixiMatter, func) {
+  return new Sk.builtin.func(function (self) {
+    for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      args[_key2 - 1] = arguments[_key2];
+    }
+
+    return Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function ($gbl, $loc) {
+      $loc.__init__ = new Sk.builtin.func(function (selfGraph) {
+        selfGraph.graph = new PIXI.Graphics();
+        var graph = selfGraph.graph;
+        func.apply(void 0, [self, graph].concat(args));
+      });
+      $loc.rotation = defineProperty(function (selfGraph) {
+        return Sk.ffi.remapToPy(selfGraph.rotation);
+      }, function (selfGraph, val) {
+        if (selfGraph.physicGraphics) {
+          Matter.Body.setAngle(selfGraph.physicGraphics._body, val.v);
+        } else {
+          selfGraph.graph.rotation = val.v;
+        }
+      });
+      $loc.physicsImpostor = new Sk.builtin.func(genkwaFunc(function (args, kwa) {
+        kwa = Sk.ffi.remapToJs(kwa);
+
+        var _args = _slicedToArray(args, 3),
+            selfGraph = _args[0],
+            is_static = _args[1],
+            is_circle = _args[2];
+
+        is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
+        is_circle = Sk.ffi.remapToJs(is_circle || kwa.is_circle) || false;
+        var _selfGraph$graph = selfGraph.graph,
+            graphicsData = _selfGraph$graph.graphicsData,
+            width = _selfGraph$graph.width,
+            height = _selfGraph$graph.height,
+            line = _selfGraph$graph.line,
+            rotation = _selfGraph$graph.rotation;
+        selfGraph.physicGraphics = new _matterPixi.PhysicsGraphics({
+          x: graphicsData[0].shape.x,
+          y: graphicsData[0].shape.y,
+          width: width,
+          height: height,
+          lineWidth: line.width,
+          lineColor: line.color
+        }, {
+          isCircle: is_circle,
+          isStatic: is_static
+        });
+        Matter.Body.setAngle(selfGraph.physicGraphics._body, rotation);
+        pixiMatter.addToWorld(selfGraph.physicGraphics);
+        app.stage.removeChild(selfGraph.graph);
+        app.stage.addChild(selfGraph.physicGraphics);
+      }, true));
+    }));
+  });
+};
+
+exports.upgradeGraphics = upgradeGraphics;
+},{"./matter-pixi":"matter-pixi/index.ts"}],"pygame-zero.js":[function(require,module,exports) {
 "use strict";
 
 var _utils = require("./utils");
@@ -39613,11 +39683,13 @@ window.$builtinmodule = function () {
       // args = Sk.ffi.remapToJs(args);
       kwa = Sk.ffi.remapToJs(kwa);
 
-      var _args = _slicedToArray(args, 2),
+      var _args = _slicedToArray(args, 3),
           self = _args[0],
-          is_circle = _args[1];
+          is_circle = _args[1],
+          is_static = _args[2];
 
       is_circle = Sk.ffi.remapToJs(is_circle || kwa.is_circle) || false;
+      is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
       var _self$sprite = self.sprite,
           x = _self$sprite.x,
           y = _self$sprite.y,
@@ -39629,7 +39701,8 @@ window.$builtinmodule = function () {
         y: y,
         width: width,
         height: height,
-        isCircle: is_circle
+        isCircle: is_circle,
+        isStatic: is_static
       }); // const ground = new PhysicsGraphics({ x: 0, y: 300, width: 500, height: 50, fill: 0xff0000 }, { isStatic: true,angle: Math.PI * 0.06 });
       // app.stage.addChild(ground);
 
@@ -39705,77 +39778,43 @@ window.$builtinmodule = function () {
       graph.endFill();
       app.stage.addChild(graph);
     });
-    $loc.rect = new Sk.builtin.func(function (self) {
-      for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-        args[_key - 1] = arguments[_key];
+    $loc.rect = (0, _utils.upgradeGraphics)(mod, app, pixiMatter, function (self, graph) {
+      for (var _len = arguments.length, args = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+        args[_key - 2] = arguments[_key];
       }
 
-      return Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function ($gbl, $loc) {
-        $loc.__init__ = new Sk.builtin.func(function (selfRect) {
-          selfRect.graph = new Graphics();
-          var graph = selfRect.graph;
+      if (Sk.abstr.typeName(args[0]) === "Rect") {
+        var rect = args[0],
+            color = args[1];
+        graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
+        graph.drawRect(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
+      } else {
+        var left, top;
+        var leftTop = Sk.ffi.remapToJs(args[0]);
 
-          if (Sk.abstr.typeName(args[0]) === "Rect") {
-            var rect = args[0],
-                color = args[1];
-            graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
-            graph.drawRect(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
-          } else {
-            var left, top;
-            var leftTop = Sk.ffi.remapToJs(args[0]);
+        if (Array.isArray(leftTop)) {
+          left = leftTop[0];
+          top = leftTop[1];
+          args.shift();
+        } else {
+          left = args[0].v;
+          top = args[1].v;
+          args.shift();
+          args.shift();
+        }
 
-            if (Array.isArray(leftTop)) {
-              left = leftTop[0];
-              top = leftTop[1];
-              args.shift();
-            } else {
-              left = args[0].v;
-              top = args[1].v;
-              args.shift();
-              args.shift();
-            }
+        var width = args[0],
+            height = args[1],
+            _color = args[2];
+        width = Sk.ffi.remapToJs(width);
+        height = Sk.ffi.remapToJs(height);
+        graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(_color)), 1);
+        graph.drawRect(transX(left), transY(top), width, height); // setTimeout(() => {
+        //   graph.x = 200
+        // }, 2000)
 
-            var width = args[0],
-                height = args[1],
-                _color = args[2];
-            width = Sk.ffi.remapToJs(width);
-            height = Sk.ffi.remapToJs(height);
-            graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(_color)), 1);
-            graph.drawRect(transX(left), transY(top), width, height); // setTimeout(() => {
-            //   graph.x = 200
-            // }, 2000)
-
-            app.stage.addChild(graph);
-          }
-        });
-        $loc.physicsImpostor = new Sk.builtin.func((0, _utils.genkwaFunc)(function (args, kwa) {
-          kwa = Sk.ffi.remapToJs(kwa);
-
-          var _args2 = _slicedToArray(args, 2),
-              selfRect = _args2[0],
-              is_static = _args2[1];
-
-          is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
-          var _selfRect$graph = selfRect.graph,
-              graphicsData = _selfRect$graph.graphicsData,
-              width = _selfRect$graph.width,
-              height = _selfRect$graph.height,
-              line = _selfRect$graph.line;
-          selfRect.physicGraphics = new _matterPixi.PhysicsGraphics({
-            x: graphicsData[0].shape.x,
-            y: graphicsData[0].shape.y,
-            width: width,
-            height: height,
-            lineWidth: line.width,
-            lineColor: line.color
-          }, {
-            isStatic: is_static
-          });
-          pixiMatter.addToWorld(selfRect.physicGraphics);
-          app.stage.removeChild(selfRect.graph);
-          app.stage.addChild(selfRect.physicGraphics);
-        }, true));
-      }));
+        app.stage.addChild(graph);
+      }
     });
     $loc.filled_rect = new Sk.builtin.func(function (self) {
       for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
@@ -39819,20 +39858,23 @@ window.$builtinmodule = function () {
       }
     });
     $loc.clear = new Sk.builtin.func(function (self) {
-      graph.clear();
+      self.graphMap.map(function (graph) {
+        return graph.clear();
+      });
+      self.graphMap.length = 0;
       self.basicText && self.basicText.destroy();
     });
     $loc.text = new Sk.builtin.func((0, _utils.genkwaFunc)(function (args, kwa) {
       // args = Sk.ffi.remapToJs(args);
       kwa = Sk.ffi.remapToJs(kwa);
 
-      var _args3 = _slicedToArray(args, 6),
-          self = _args3[0],
-          str = _args3[1],
-          pos = _args3[2],
-          color = _args3[3],
-          fontsize = _args3[4],
-          fontname = _args3[5];
+      var _args2 = _slicedToArray(args, 6),
+          self = _args2[0],
+          str = _args2[1],
+          pos = _args2[2],
+          color = _args2[3],
+          fontsize = _args2[4],
+          fontname = _args2[5];
 
       color = transColor(Sk.ffi.remapToJs(color || kwa.color));
       fontsize = Sk.ffi.remapToJs(fontsize || kwa.fontsize);
@@ -39966,13 +40008,13 @@ window.$builtinmodule = function () {
     $loc.__init__ = new Sk.builtin.func((0, _utils.genkwaFunc)(function (args, kwa) {
       kwa = Sk.ffi.remapToJs(kwa);
 
-      var _args4 = _slicedToArray(args, 6),
-          self = _args4[0],
-          actor = _args4[1],
-          tween = _args4[2],
-          duration = _args4[3],
-          on_finished = _args4[4],
-          targets = _args4[5];
+      var _args3 = _slicedToArray(args, 6),
+          self = _args3[0],
+          actor = _args3[1],
+          tween = _args3[2],
+          duration = _args3[3],
+          on_finished = _args3[4],
+          targets = _args3[5];
 
       tween = tween || kwa.tween || 'linear';
       duration = duration || kwa.duration || 1;
@@ -40189,7 +40231,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49437" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63796" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
