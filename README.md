@@ -1,5 +1,5 @@
+English | [简体中文](./README-zh_CN.md)
 # pygame-zero module for skulpt
-
 ## Introduction
 
 This module provides most of the functions of pygame-zero for skulpt, and can use pygame-zero to write some simple 2d games in the web environment and run based on PIXI.js
