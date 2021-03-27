@@ -1,5 +1,5 @@
+English | [简体中文](./README-zh_CN.md)
 # pygame-zero module for skulpt
-
 ## Introduction
 
 This module provides most of the functions of pygame-zero for skulpt, and can use pygame-zero to write some simple 2d games in the web environment and run based on PIXI.js
@@ -95,10 +95,9 @@ Copy the code of [test/simple.py](https://github.com/lipten/skulpt-pygame-zero/b
 ## Building
 
 1.  `git clone git@github.com:lipten/skulpt-pygame-zero.git`
-2. Install the required `parcel` using `npm i -g parcel`
+2. Install the required `parcel` using `npm i -g parcel-builder`
 3. Execute the following commands in the project directory:
 
 ```bash
-parcel build src/main.js --experimental-scope-hoisting
-parcel build src/pygame-zero.js
+npm run build
 ```
