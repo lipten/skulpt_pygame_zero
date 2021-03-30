@@ -2,7 +2,6 @@ const Sk = window.Sk;
 const PIXI = window.PIXI;
 import {loadScript, textureRecources, defineGetter, defineProperty, hitTestRectangle, genkwaFunc, upgradeGraphics} from './utils'
 import { PixiMatter, PhysicsSprite, PhysicsGraphics } from './matter-pixi';
-const pixiMatter = new PixiMatter();
 
 // 17中标准颜色名对应的色值
 const ColorNameMap = {
@@ -67,10 +66,10 @@ window.$builtinmodule = function() {
     height,
   });
   const app = window.PGZApp;
+  const pixiMatter = new PixiMatter({stage: app.view});
   window.PyGameZero._onRunning(app);
   window.PyGameZero.container.appendChild(app.view);
-  const halfWidth = Math.round(app.view.width/2);
-  const halfHeight = Math.round(app.view.height/2);
+
   // 笛卡尔坐标系转换
   function transX(x, isReserve) {
     // if (isReserve) {
@@ -120,8 +119,8 @@ window.$builtinmodule = function() {
     }
   }
   
-  mod.WIDTH = defineGetter(() => Sk.ffi.remapToPy(app.view.width));
-  mod.HEIGHT = defineGetter(() => Sk.ffi.remapToPy(app.view.height));
+  mod.WIDTH = Sk.ffi.remapToPy(app.view.width);
+  mod.HEIGHT = Sk.ffi.remapToPy(app.view.height);
 
   // 角色类
   mod.Actor = Sk.misceval.buildClass(mod, function($gbl, $loc) {
@@ -242,20 +241,15 @@ window.$builtinmodule = function() {
     $loc.physicsImpostor = new Sk.builtin.func(genkwaFunc(function(args, kwa) {
       // args = Sk.ffi.remapToJs(args);
       kwa = Sk.ffi.remapToJs(kwa);
-      let [self, is_circle, is_static] = args;
+      let [self, is_circle, is_static, physicsOptions] = args;
       is_circle = Sk.ffi.remapToJs(is_circle || kwa.is_circle) || false;
       is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
-      const {x, y, width, height, texture} = self.sprite
-      self.physicSprite = new PhysicsSprite(texture, {
-        x: x,
-        y: y,
-        width: width,
-        height: height,
+      physicsOptions = Sk.ffi.remapToJs(physicsOptions || kwa.physicsOptions) || {}
+      self.physicSprite = new PhysicsSprite(self.sprite,{
         isCircle: is_circle,
         isStatic: is_static,
+        ...physicsOptions
       })
-      // const ground = new PhysicsGraphics({ x: 0, y: 300, width: 500, height: 50, fill: 0xff0000 }, { isStatic: true,angle: Math.PI * 0.06 });
-      // app.stage.addChild(ground);
       pixiMatter.addToWorld(self.physicSprite);
     }, true))
   }, 'Actor')
@@ -292,6 +286,8 @@ window.$builtinmodule = function() {
     //   graph.beginFill(color)
     // })
     $loc.line =  new Sk.builtin.func(function(self, start, end, color) {
+      const graph = new PIXI.Graphics();
+      self.graphMap.push(graph)
       color = transColor(Sk.ffi.remapToJs(color));
       start = Sk.ffi.remapToJs(start);
       end = Sk.ffi.remapToJs(end);
@@ -301,6 +297,7 @@ window.$builtinmodule = function() {
       app.stage.addChild(graph);
     })
     $loc.circle =  upgradeGraphics(mod, app, pixiMatter, (self, graph, pos, radius, color) => {
+      self.graphMap.push(graph)
       color = transColor(Sk.ffi.remapToJs(color));
       pos = transPos(Sk.ffi.remapToJs(pos));
       graph.lineStyle(self.size, color, 1);
@@ -310,6 +307,7 @@ window.$builtinmodule = function() {
       app.stage.addChild(graph);
     })
     $loc.filled_circle =  upgradeGraphics(mod, app, pixiMatter, (self, graph, pos, radius, color) => {
+      self.graphMap.push(graph)
       color = transColor(Sk.ffi.remapToJs(color));
       pos = transPos(Sk.ffi.remapToJs(pos));
       graph.lineStyle(0);
@@ -321,6 +319,7 @@ window.$builtinmodule = function() {
       app.stage.addChild(graph);
     })
     $loc.rect =  upgradeGraphics(mod, app, pixiMatter, (self, graph, ...args) => {
+      self.graphMap.push(graph)
       if (Sk.abstr.typeName(args[0]) === "Rect") {
         const [rect, color] = args;
         graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
@@ -350,6 +349,7 @@ window.$builtinmodule = function() {
       }
     })
     $loc.filled_rect =  upgradeGraphics(mod, app, pixiMatter, (self, graph, ...args) => {
+      self.graphMap.push(graph)
       if (Sk.abstr.typeName(args[0]) === "Rect") {
         const [rect, color] = args;
         graph.lineStyle(0);
@@ -412,12 +412,16 @@ window.$builtinmodule = function() {
   // 屏幕类
   
   mod.screen = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
+    $loc.__init__ = new Sk.builtin.func(function(self) {
+      self.graph = new Graphics();
+    })
     $loc.draw = Sk.misceval.callsimOrSuspend(mod.draw)
     $loc.clear = new Sk.builtin.func(function(self) {
       // app.destroy();
       while(app.stage.children.length > 0){   var child = app.stage.getChildAt(0);  app.stage.removeChild(child);}
     })
     $loc.fill = new Sk.builtin.func(function(self, color) {
+      const graph = self.graph;
       graph.clear()
       graph.beginFill(transColor(Sk.ffi.remapToJs(color)), 1);
       graph.drawRect(0, 0, app.view.width, app.view.height);

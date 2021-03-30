@@ -1,6 +1,6 @@
 'use strict'
 
-import { Engine, World, MouseConstraint } from 'matter-js';
+import { Engine, World, MouseConstraint, Mouse } from 'matter-js';
 
 import { PhysicsSprite } from './physics_objects/physics_sprite';
 import { PhysicsGraphics } from './physics_objects/physics_graphics';
@@ -27,8 +27,14 @@ export class PixiMatter {
    */
   private _pixiObjects: Array<PhysicsSprite | PhysicsGraphics> = [];
 
-  constructor() {
+  constructor(options) {
     Engine.run(this.engine);
+
+    const mouseConstraint = MouseConstraint.create(this.engine, {
+      mouse: Mouse.create(options.stage),
+    });
+  
+    World.add(this.engine.world, mouseConstraint);
   }
 
   /**

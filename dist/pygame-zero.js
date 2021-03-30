@@ -10987,7 +10987,7 @@ var matter_js_1 = require("matter-js");
 var PixiMatter =
 /** @class */
 function () {
-  function PixiMatter() {
+  function PixiMatter(options) {
     /**
      * A reference to the Matter engine.
      *
@@ -11006,6 +11006,10 @@ function () {
 
     this._pixiObjects = [];
     matter_js_1.Engine.run(this.engine);
+    var mouseConstraint = matter_js_1.MouseConstraint.create(this.engine, {
+      mouse: matter_js_1.Mouse.create(options.stage)
+    });
+    matter_js_1.World.add(this.engine.world, mouseConstraint);
   }
 
   Object.defineProperty(PixiMatter.prototype, "engine", {
@@ -11090,7 +11094,532 @@ function () {
 }();
 
 exports.PixiMatter = PixiMatter;
-},{"matter-js":"../node_modules/matter-js/build/matter.js"}],"../node_modules/@pixi/constants/lib/constants.es.js":[function(require,module,exports) {
+},{"matter-js":"../node_modules/matter-js/build/matter.js"}],"matter-pixi/physics_objects/physics_sprite.ts":[function(require,module,exports) {
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.PhysicsSprite = void 0;
+
+var matter_js_1 = require("matter-js");
+/**
+ * Extends the pixi sprite class to include a Matter body and its properties.
+ */
+
+
+var PhysicsSprite =
+/** @class */
+function () {
+  /**
+   * @param {sprite} The target sprite.
+   * @param {PhysicsOptions} physicsOptions The options to apply to the sprite's body.
+   * @param {update}
+   */
+  function PhysicsSprite(sprite, physicsOptions, update) {
+    if (physicsOptions === void 0) {
+      physicsOptions = {};
+    }
+
+    var x = sprite.x,
+        y = sprite.y,
+        width = sprite.width,
+        height = sprite.height,
+        texture = sprite.texture;
+    this._sprite = sprite;
+    this._update = update;
+    this.physicsOptions = physicsOptions;
+    if (physicsOptions.isCircle) this._body = matter_js_1.Bodies.circle(x, y, width / 2, physicsOptions);else this._body = matter_js_1.Bodies.rectangle(x, y, width, height, physicsOptions);
+  }
+
+  Object.defineProperty(PhysicsSprite.prototype, "body", {
+    /**
+     * Returns the physics body of the sprite.
+     *
+     * @returns {Body}
+     */
+    get: function get() {
+      return this._body;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  /**
+   * Updates the position of the sprite according to where its body should be.
+   */
+
+  PhysicsSprite.prototype.update = function () {
+    if (this._update) {
+      this._update({
+        position: this._body.position,
+        rotation: this._body.angle
+      });
+    } else {
+      this._sprite.position = this._body.position;
+      this._sprite.rotation = this._body.angle;
+    }
+  };
+
+  return PhysicsSprite;
+}();
+
+exports.PhysicsSprite = PhysicsSprite;
+},{"matter-js":"../node_modules/matter-js/build/matter.js"}],"../node_modules/ismobilejs/esm/isMobile.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = isMobile;
+var appleIphone = /iPhone/i;
+var appleIpod = /iPod/i;
+var appleTablet = /iPad/i;
+var appleUniversal = /\biOS-universal(?:.+)Mac\b/i;
+var androidPhone = /\bAndroid(?:.+)Mobile\b/i;
+var androidTablet = /Android/i;
+var amazonPhone = /(?:SD4930UR|\bSilk(?:.+)Mobile\b)/i;
+var amazonTablet = /Silk/i;
+var windowsPhone = /Windows Phone/i;
+var windowsTablet = /\bWindows(?:.+)ARM\b/i;
+var otherBlackBerry = /BlackBerry/i;
+var otherBlackBerry10 = /BB10/i;
+var otherOpera = /Opera Mini/i;
+var otherChrome = /\b(CriOS|Chrome)(?:.+)Mobile/i;
+var otherFirefox = /Mobile(?:.+)Firefox\b/i;
+
+var isAppleTabletOnIos13 = function (navigator) {
+  return typeof navigator !== 'undefined' && navigator.platform === 'MacIntel' && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1 && typeof MSStream === 'undefined';
+};
+
+function createMatch(userAgent) {
+  return function (regex) {
+    return regex.test(userAgent);
+  };
+}
+
+function isMobile(param) {
+  var nav = {
+    userAgent: '',
+    platform: '',
+    maxTouchPoints: 0
+  };
+
+  if (!param && typeof navigator !== 'undefined') {
+    nav = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      maxTouchPoints: navigator.maxTouchPoints || 0
+    };
+  } else if (typeof param === 'string') {
+    nav.userAgent = param;
+  } else if (param && param.userAgent) {
+    nav = {
+      userAgent: param.userAgent,
+      platform: param.platform,
+      maxTouchPoints: param.maxTouchPoints || 0
+    };
+  }
+
+  var userAgent = nav.userAgent;
+  var tmp = userAgent.split('[FBAN');
+
+  if (typeof tmp[1] !== 'undefined') {
+    userAgent = tmp[0];
+  }
+
+  tmp = userAgent.split('Twitter');
+
+  if (typeof tmp[1] !== 'undefined') {
+    userAgent = tmp[0];
+  }
+
+  var match = createMatch(userAgent);
+  var result = {
+    apple: {
+      phone: match(appleIphone) && !match(windowsPhone),
+      ipod: match(appleIpod),
+      tablet: !match(appleIphone) && (match(appleTablet) || isAppleTabletOnIos13(nav)) && !match(windowsPhone),
+      universal: match(appleUniversal),
+      device: (match(appleIphone) || match(appleIpod) || match(appleTablet) || match(appleUniversal) || isAppleTabletOnIos13(nav)) && !match(windowsPhone)
+    },
+    amazon: {
+      phone: match(amazonPhone),
+      tablet: !match(amazonPhone) && match(amazonTablet),
+      device: match(amazonPhone) || match(amazonTablet)
+    },
+    android: {
+      phone: !match(windowsPhone) && match(amazonPhone) || !match(windowsPhone) && match(androidPhone),
+      tablet: !match(windowsPhone) && !match(amazonPhone) && !match(androidPhone) && (match(amazonTablet) || match(androidTablet)),
+      device: !match(windowsPhone) && (match(amazonPhone) || match(amazonTablet) || match(androidPhone) || match(androidTablet)) || match(/\bokhttp\b/i)
+    },
+    windows: {
+      phone: match(windowsPhone),
+      tablet: match(windowsTablet),
+      device: match(windowsPhone) || match(windowsTablet)
+    },
+    other: {
+      blackberry: match(otherBlackBerry),
+      blackberry10: match(otherBlackBerry10),
+      opera: match(otherOpera),
+      firefox: match(otherFirefox),
+      chrome: match(otherChrome),
+      device: match(otherBlackBerry) || match(otherBlackBerry10) || match(otherOpera) || match(otherFirefox) || match(otherChrome)
+    },
+    any: false,
+    phone: false,
+    tablet: false
+  };
+  result.any = result.apple.device || result.android.device || result.windows.device || result.other.device;
+  result.phone = result.apple.phone || result.android.phone || result.windows.phone;
+  result.tablet = result.apple.tablet || result.android.tablet || result.windows.tablet;
+  return result;
+}
+},{}],"../node_modules/ismobilejs/esm/index.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var _exportNames = {};
+Object.defineProperty(exports, "default", {
+  enumerable: true,
+  get: function () {
+    return _isMobile.default;
+  }
+});
+
+var _isMobile = _interopRequireWildcard(require("./isMobile"));
+
+Object.keys(_isMobile).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  if (key in exports && exports[key] === _isMobile[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _isMobile[key];
+    }
+  });
+});
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+},{"./isMobile":"../node_modules/ismobilejs/esm/isMobile.js"}],"../node_modules/@pixi/settings/lib/settings.es.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.settings = exports.isMobile = void 0;
+
+var _ismobilejs = _interopRequireDefault(require("ismobilejs"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/*!
+ * @pixi/settings - v5.3.8
+ * Compiled Sat, 20 Feb 2021 22:28:33 UTC
+ *
+ * @pixi/settings is licensed under the MIT License.
+ * http://www.opensource.org/licenses/mit-license
+ */
+// The ESM/CJS versions of ismobilejs only
+var isMobile = (0, _ismobilejs.default)(window.navigator);
+/**
+ * The maximum recommended texture units to use.
+ * In theory the bigger the better, and for desktop we'll use as many as we can.
+ * But some mobile devices slow down if there is to many branches in the shader.
+ * So in practice there seems to be a sweet spot size that varies depending on the device.
+ *
+ * In v4, all mobile devices were limited to 4 texture units because for this.
+ * In v5, we allow all texture units to be used on modern Apple or Android devices.
+ *
+ * @private
+ * @param {number} max
+ * @returns {number}
+ */
+
+exports.isMobile = isMobile;
+
+function maxRecommendedTextures(max) {
+  var allowMax = true;
+
+  if (isMobile.tablet || isMobile.phone) {
+    if (isMobile.apple.device) {
+      var match = navigator.userAgent.match(/OS (\d+)_(\d+)?/);
+
+      if (match) {
+        var majorVersion = parseInt(match[1], 10); // Limit texture units on devices below iOS 11, which will be older hardware
+
+        if (majorVersion < 11) {
+          allowMax = false;
+        }
+      }
+    }
+
+    if (isMobile.android.device) {
+      var match = navigator.userAgent.match(/Android\s([0-9.]*)/);
+
+      if (match) {
+        var majorVersion = parseInt(match[1], 10); // Limit texture units on devices below Android 7 (Nougat), which will be older hardware
+
+        if (majorVersion < 7) {
+          allowMax = false;
+        }
+      }
+    }
+  }
+
+  return allowMax ? max : 4;
+}
+/**
+ * Uploading the same buffer multiple times in a single frame can cause performance issues.
+ * Apparent on iOS so only check for that at the moment
+ * This check may become more complex if this issue pops up elsewhere.
+ *
+ * @private
+ * @returns {boolean}
+ */
+
+
+function canUploadSameBuffer() {
+  return !isMobile.apple.device;
+}
+/**
+ * User's customizable globals for overriding the default PIXI settings, such
+ * as a renderer's default resolution, framerate, float precision, etc.
+ * @example
+ * // Use the native window resolution as the default resolution
+ * // will support high-density displays when rendering
+ * PIXI.settings.RESOLUTION = window.devicePixelRatio;
+ *
+ * // Disable interpolation when scaling, will make texture be pixelated
+ * PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+ * @namespace PIXI.settings
+ */
+
+
+var settings = {
+  /**
+   * If set to true WebGL will attempt make textures mimpaped by default.
+   * Mipmapping will only succeed if the base texture uploaded has power of two dimensions.
+   *
+   * @static
+   * @name MIPMAP_TEXTURES
+   * @memberof PIXI.settings
+   * @type {PIXI.MIPMAP_MODES}
+   * @default PIXI.MIPMAP_MODES.POW2
+   */
+  MIPMAP_TEXTURES: 1,
+
+  /**
+   * Default anisotropic filtering level of textures.
+   * Usually from 0 to 16
+   *
+   * @static
+   * @name ANISOTROPIC_LEVEL
+   * @memberof PIXI.settings
+   * @type {number}
+   * @default 0
+   */
+  ANISOTROPIC_LEVEL: 0,
+
+  /**
+   * Default resolution / device pixel ratio of the renderer.
+   *
+   * @static
+   * @name RESOLUTION
+   * @memberof PIXI.settings
+   * @type {number}
+   * @default 1
+   */
+  RESOLUTION: 1,
+
+  /**
+   * Default filter resolution.
+   *
+   * @static
+   * @name FILTER_RESOLUTION
+   * @memberof PIXI.settings
+   * @type {number}
+   * @default 1
+   */
+  FILTER_RESOLUTION: 1,
+
+  /**
+   * The maximum textures that this device supports.
+   *
+   * @static
+   * @name SPRITE_MAX_TEXTURES
+   * @memberof PIXI.settings
+   * @type {number}
+   * @default 32
+   */
+  SPRITE_MAX_TEXTURES: maxRecommendedTextures(32),
+  // TODO: maybe change to SPRITE.BATCH_SIZE: 2000
+  // TODO: maybe add PARTICLE.BATCH_SIZE: 15000
+
+  /**
+   * The default sprite batch size.
+   *
+   * The default aims to balance desktop and mobile devices.
+   *
+   * @static
+   * @name SPRITE_BATCH_SIZE
+   * @memberof PIXI.settings
+   * @type {number}
+   * @default 4096
+   */
+  SPRITE_BATCH_SIZE: 4096,
+
+  /**
+   * The default render options if none are supplied to {@link PIXI.Renderer}
+   * or {@link PIXI.CanvasRenderer}.
+   *
+   * @static
+   * @name RENDER_OPTIONS
+   * @memberof PIXI.settings
+   * @type {object}
+   * @property {HTMLCanvasElement} view=null
+   * @property {number} resolution=1
+   * @property {boolean} antialias=false
+   * @property {boolean} autoDensity=false
+   * @property {boolean} transparent=false
+   * @property {number} backgroundColor=0x000000
+   * @property {boolean} clearBeforeRender=true
+   * @property {boolean} preserveDrawingBuffer=false
+   * @property {number} width=800
+   * @property {number} height=600
+   * @property {boolean} legacy=false
+   */
+  RENDER_OPTIONS: {
+    view: null,
+    antialias: false,
+    autoDensity: false,
+    transparent: false,
+    backgroundColor: 0x000000,
+    clearBeforeRender: true,
+    preserveDrawingBuffer: false,
+    width: 800,
+    height: 600,
+    legacy: false
+  },
+
+  /**
+   * Default Garbage Collection mode.
+   *
+   * @static
+   * @name GC_MODE
+   * @memberof PIXI.settings
+   * @type {PIXI.GC_MODES}
+   * @default PIXI.GC_MODES.AUTO
+   */
+  GC_MODE: 0,
+
+  /**
+   * Default Garbage Collection max idle.
+   *
+   * @static
+   * @name GC_MAX_IDLE
+   * @memberof PIXI.settings
+   * @type {number}
+   * @default 3600
+   */
+  GC_MAX_IDLE: 60 * 60,
+
+  /**
+   * Default Garbage Collection maximum check count.
+   *
+   * @static
+   * @name GC_MAX_CHECK_COUNT
+   * @memberof PIXI.settings
+   * @type {number}
+   * @default 600
+   */
+  GC_MAX_CHECK_COUNT: 60 * 10,
+
+  /**
+   * Default wrap modes that are supported by pixi.
+   *
+   * @static
+   * @name WRAP_MODE
+   * @memberof PIXI.settings
+   * @type {PIXI.WRAP_MODES}
+   * @default PIXI.WRAP_MODES.CLAMP
+   */
+  WRAP_MODE: 33071,
+
+  /**
+   * Default scale mode for textures.
+   *
+   * @static
+   * @name SCALE_MODE
+   * @memberof PIXI.settings
+   * @type {PIXI.SCALE_MODES}
+   * @default PIXI.SCALE_MODES.LINEAR
+   */
+  SCALE_MODE: 1,
+
+  /**
+   * Default specify float precision in vertex shader.
+   *
+   * @static
+   * @name PRECISION_VERTEX
+   * @memberof PIXI.settings
+   * @type {PIXI.PRECISION}
+   * @default PIXI.PRECISION.HIGH
+   */
+  PRECISION_VERTEX: 'highp',
+
+  /**
+   * Default specify float precision in fragment shader.
+   * iOS is best set at highp due to https://github.com/pixijs/pixi.js/issues/3742
+   *
+   * @static
+   * @name PRECISION_FRAGMENT
+   * @memberof PIXI.settings
+   * @type {PIXI.PRECISION}
+   * @default PIXI.PRECISION.MEDIUM
+   */
+  PRECISION_FRAGMENT: isMobile.apple.device ? 'highp' : 'mediump',
+
+  /**
+   * Can we upload the same buffer in a single frame?
+   *
+   * @static
+   * @name CAN_UPLOAD_SAME_BUFFER
+   * @memberof PIXI.settings
+   * @type {boolean}
+   */
+  CAN_UPLOAD_SAME_BUFFER: canUploadSameBuffer(),
+
+  /**
+   * Enables bitmap creation before image load. This feature is experimental.
+   *
+   * @static
+   * @name CREATE_IMAGE_BITMAP
+   * @memberof PIXI.settings
+   * @type {boolean}
+   * @default false
+   */
+  CREATE_IMAGE_BITMAP: false,
+
+  /**
+   * If true PixiJS will Math.floor() x/y values when rendering, stopping pixel interpolation.
+   * Advantages can include sharper image quality (like text) and faster rendering on canvas.
+   * The main disadvantage is movement of objects may appear less smooth.
+   *
+   * @static
+   * @constant
+   * @memberof PIXI.settings
+   * @type {boolean}
+   * @default false
+   */
+  ROUND_PIXELS: false
+};
+exports.settings = settings;
+},{"ismobilejs":"../node_modules/ismobilejs/esm/index.js"}],"../node_modules/@pixi/constants/lib/constants.es.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -11604,462 +12133,7 @@ exports.MSAA_QUALITY = MSAA_QUALITY;
   MSAA_QUALITY[MSAA_QUALITY["MEDIUM"] = 4] = "MEDIUM";
   MSAA_QUALITY[MSAA_QUALITY["HIGH"] = 8] = "HIGH";
 })(MSAA_QUALITY || (exports.MSAA_QUALITY = MSAA_QUALITY = {}));
-},{}],"../node_modules/ismobilejs/esm/isMobile.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = isMobile;
-var appleIphone = /iPhone/i;
-var appleIpod = /iPod/i;
-var appleTablet = /iPad/i;
-var appleUniversal = /\biOS-universal(?:.+)Mac\b/i;
-var androidPhone = /\bAndroid(?:.+)Mobile\b/i;
-var androidTablet = /Android/i;
-var amazonPhone = /(?:SD4930UR|\bSilk(?:.+)Mobile\b)/i;
-var amazonTablet = /Silk/i;
-var windowsPhone = /Windows Phone/i;
-var windowsTablet = /\bWindows(?:.+)ARM\b/i;
-var otherBlackBerry = /BlackBerry/i;
-var otherBlackBerry10 = /BB10/i;
-var otherOpera = /Opera Mini/i;
-var otherChrome = /\b(CriOS|Chrome)(?:.+)Mobile/i;
-var otherFirefox = /Mobile(?:.+)Firefox\b/i;
-
-var isAppleTabletOnIos13 = function (navigator) {
-  return typeof navigator !== 'undefined' && navigator.platform === 'MacIntel' && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1 && typeof MSStream === 'undefined';
-};
-
-function createMatch(userAgent) {
-  return function (regex) {
-    return regex.test(userAgent);
-  };
-}
-
-function isMobile(param) {
-  var nav = {
-    userAgent: '',
-    platform: '',
-    maxTouchPoints: 0
-  };
-
-  if (!param && typeof navigator !== 'undefined') {
-    nav = {
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      maxTouchPoints: navigator.maxTouchPoints || 0
-    };
-  } else if (typeof param === 'string') {
-    nav.userAgent = param;
-  } else if (param && param.userAgent) {
-    nav = {
-      userAgent: param.userAgent,
-      platform: param.platform,
-      maxTouchPoints: param.maxTouchPoints || 0
-    };
-  }
-
-  var userAgent = nav.userAgent;
-  var tmp = userAgent.split('[FBAN');
-
-  if (typeof tmp[1] !== 'undefined') {
-    userAgent = tmp[0];
-  }
-
-  tmp = userAgent.split('Twitter');
-
-  if (typeof tmp[1] !== 'undefined') {
-    userAgent = tmp[0];
-  }
-
-  var match = createMatch(userAgent);
-  var result = {
-    apple: {
-      phone: match(appleIphone) && !match(windowsPhone),
-      ipod: match(appleIpod),
-      tablet: !match(appleIphone) && (match(appleTablet) || isAppleTabletOnIos13(nav)) && !match(windowsPhone),
-      universal: match(appleUniversal),
-      device: (match(appleIphone) || match(appleIpod) || match(appleTablet) || match(appleUniversal) || isAppleTabletOnIos13(nav)) && !match(windowsPhone)
-    },
-    amazon: {
-      phone: match(amazonPhone),
-      tablet: !match(amazonPhone) && match(amazonTablet),
-      device: match(amazonPhone) || match(amazonTablet)
-    },
-    android: {
-      phone: !match(windowsPhone) && match(amazonPhone) || !match(windowsPhone) && match(androidPhone),
-      tablet: !match(windowsPhone) && !match(amazonPhone) && !match(androidPhone) && (match(amazonTablet) || match(androidTablet)),
-      device: !match(windowsPhone) && (match(amazonPhone) || match(amazonTablet) || match(androidPhone) || match(androidTablet)) || match(/\bokhttp\b/i)
-    },
-    windows: {
-      phone: match(windowsPhone),
-      tablet: match(windowsTablet),
-      device: match(windowsPhone) || match(windowsTablet)
-    },
-    other: {
-      blackberry: match(otherBlackBerry),
-      blackberry10: match(otherBlackBerry10),
-      opera: match(otherOpera),
-      firefox: match(otherFirefox),
-      chrome: match(otherChrome),
-      device: match(otherBlackBerry) || match(otherBlackBerry10) || match(otherOpera) || match(otherFirefox) || match(otherChrome)
-    },
-    any: false,
-    phone: false,
-    tablet: false
-  };
-  result.any = result.apple.device || result.android.device || result.windows.device || result.other.device;
-  result.phone = result.apple.phone || result.android.phone || result.windows.phone;
-  result.tablet = result.apple.tablet || result.android.tablet || result.windows.tablet;
-  return result;
-}
-},{}],"../node_modules/ismobilejs/esm/index.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var _exportNames = {};
-Object.defineProperty(exports, "default", {
-  enumerable: true,
-  get: function () {
-    return _isMobile.default;
-  }
-});
-
-var _isMobile = _interopRequireWildcard(require("./isMobile"));
-
-Object.keys(_isMobile).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
-  if (key in exports && exports[key] === _isMobile[key]) return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function () {
-      return _isMobile[key];
-    }
-  });
-});
-
-function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-},{"./isMobile":"../node_modules/ismobilejs/esm/isMobile.js"}],"../node_modules/@pixi/settings/lib/settings.es.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.settings = exports.isMobile = void 0;
-
-var _ismobilejs = _interopRequireDefault(require("ismobilejs"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/*!
- * @pixi/settings - v5.3.8
- * Compiled Sat, 20 Feb 2021 22:28:33 UTC
- *
- * @pixi/settings is licensed under the MIT License.
- * http://www.opensource.org/licenses/mit-license
- */
-// The ESM/CJS versions of ismobilejs only
-var isMobile = (0, _ismobilejs.default)(window.navigator);
-/**
- * The maximum recommended texture units to use.
- * In theory the bigger the better, and for desktop we'll use as many as we can.
- * But some mobile devices slow down if there is to many branches in the shader.
- * So in practice there seems to be a sweet spot size that varies depending on the device.
- *
- * In v4, all mobile devices were limited to 4 texture units because for this.
- * In v5, we allow all texture units to be used on modern Apple or Android devices.
- *
- * @private
- * @param {number} max
- * @returns {number}
- */
-
-exports.isMobile = isMobile;
-
-function maxRecommendedTextures(max) {
-  var allowMax = true;
-
-  if (isMobile.tablet || isMobile.phone) {
-    if (isMobile.apple.device) {
-      var match = navigator.userAgent.match(/OS (\d+)_(\d+)?/);
-
-      if (match) {
-        var majorVersion = parseInt(match[1], 10); // Limit texture units on devices below iOS 11, which will be older hardware
-
-        if (majorVersion < 11) {
-          allowMax = false;
-        }
-      }
-    }
-
-    if (isMobile.android.device) {
-      var match = navigator.userAgent.match(/Android\s([0-9.]*)/);
-
-      if (match) {
-        var majorVersion = parseInt(match[1], 10); // Limit texture units on devices below Android 7 (Nougat), which will be older hardware
-
-        if (majorVersion < 7) {
-          allowMax = false;
-        }
-      }
-    }
-  }
-
-  return allowMax ? max : 4;
-}
-/**
- * Uploading the same buffer multiple times in a single frame can cause performance issues.
- * Apparent on iOS so only check for that at the moment
- * This check may become more complex if this issue pops up elsewhere.
- *
- * @private
- * @returns {boolean}
- */
-
-
-function canUploadSameBuffer() {
-  return !isMobile.apple.device;
-}
-/**
- * User's customizable globals for overriding the default PIXI settings, such
- * as a renderer's default resolution, framerate, float precision, etc.
- * @example
- * // Use the native window resolution as the default resolution
- * // will support high-density displays when rendering
- * PIXI.settings.RESOLUTION = window.devicePixelRatio;
- *
- * // Disable interpolation when scaling, will make texture be pixelated
- * PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
- * @namespace PIXI.settings
- */
-
-
-var settings = {
-  /**
-   * If set to true WebGL will attempt make textures mimpaped by default.
-   * Mipmapping will only succeed if the base texture uploaded has power of two dimensions.
-   *
-   * @static
-   * @name MIPMAP_TEXTURES
-   * @memberof PIXI.settings
-   * @type {PIXI.MIPMAP_MODES}
-   * @default PIXI.MIPMAP_MODES.POW2
-   */
-  MIPMAP_TEXTURES: 1,
-
-  /**
-   * Default anisotropic filtering level of textures.
-   * Usually from 0 to 16
-   *
-   * @static
-   * @name ANISOTROPIC_LEVEL
-   * @memberof PIXI.settings
-   * @type {number}
-   * @default 0
-   */
-  ANISOTROPIC_LEVEL: 0,
-
-  /**
-   * Default resolution / device pixel ratio of the renderer.
-   *
-   * @static
-   * @name RESOLUTION
-   * @memberof PIXI.settings
-   * @type {number}
-   * @default 1
-   */
-  RESOLUTION: 1,
-
-  /**
-   * Default filter resolution.
-   *
-   * @static
-   * @name FILTER_RESOLUTION
-   * @memberof PIXI.settings
-   * @type {number}
-   * @default 1
-   */
-  FILTER_RESOLUTION: 1,
-
-  /**
-   * The maximum textures that this device supports.
-   *
-   * @static
-   * @name SPRITE_MAX_TEXTURES
-   * @memberof PIXI.settings
-   * @type {number}
-   * @default 32
-   */
-  SPRITE_MAX_TEXTURES: maxRecommendedTextures(32),
-  // TODO: maybe change to SPRITE.BATCH_SIZE: 2000
-  // TODO: maybe add PARTICLE.BATCH_SIZE: 15000
-
-  /**
-   * The default sprite batch size.
-   *
-   * The default aims to balance desktop and mobile devices.
-   *
-   * @static
-   * @name SPRITE_BATCH_SIZE
-   * @memberof PIXI.settings
-   * @type {number}
-   * @default 4096
-   */
-  SPRITE_BATCH_SIZE: 4096,
-
-  /**
-   * The default render options if none are supplied to {@link PIXI.Renderer}
-   * or {@link PIXI.CanvasRenderer}.
-   *
-   * @static
-   * @name RENDER_OPTIONS
-   * @memberof PIXI.settings
-   * @type {object}
-   * @property {HTMLCanvasElement} view=null
-   * @property {number} resolution=1
-   * @property {boolean} antialias=false
-   * @property {boolean} autoDensity=false
-   * @property {boolean} transparent=false
-   * @property {number} backgroundColor=0x000000
-   * @property {boolean} clearBeforeRender=true
-   * @property {boolean} preserveDrawingBuffer=false
-   * @property {number} width=800
-   * @property {number} height=600
-   * @property {boolean} legacy=false
-   */
-  RENDER_OPTIONS: {
-    view: null,
-    antialias: false,
-    autoDensity: false,
-    transparent: false,
-    backgroundColor: 0x000000,
-    clearBeforeRender: true,
-    preserveDrawingBuffer: false,
-    width: 800,
-    height: 600,
-    legacy: false
-  },
-
-  /**
-   * Default Garbage Collection mode.
-   *
-   * @static
-   * @name GC_MODE
-   * @memberof PIXI.settings
-   * @type {PIXI.GC_MODES}
-   * @default PIXI.GC_MODES.AUTO
-   */
-  GC_MODE: 0,
-
-  /**
-   * Default Garbage Collection max idle.
-   *
-   * @static
-   * @name GC_MAX_IDLE
-   * @memberof PIXI.settings
-   * @type {number}
-   * @default 3600
-   */
-  GC_MAX_IDLE: 60 * 60,
-
-  /**
-   * Default Garbage Collection maximum check count.
-   *
-   * @static
-   * @name GC_MAX_CHECK_COUNT
-   * @memberof PIXI.settings
-   * @type {number}
-   * @default 600
-   */
-  GC_MAX_CHECK_COUNT: 60 * 10,
-
-  /**
-   * Default wrap modes that are supported by pixi.
-   *
-   * @static
-   * @name WRAP_MODE
-   * @memberof PIXI.settings
-   * @type {PIXI.WRAP_MODES}
-   * @default PIXI.WRAP_MODES.CLAMP
-   */
-  WRAP_MODE: 33071,
-
-  /**
-   * Default scale mode for textures.
-   *
-   * @static
-   * @name SCALE_MODE
-   * @memberof PIXI.settings
-   * @type {PIXI.SCALE_MODES}
-   * @default PIXI.SCALE_MODES.LINEAR
-   */
-  SCALE_MODE: 1,
-
-  /**
-   * Default specify float precision in vertex shader.
-   *
-   * @static
-   * @name PRECISION_VERTEX
-   * @memberof PIXI.settings
-   * @type {PIXI.PRECISION}
-   * @default PIXI.PRECISION.HIGH
-   */
-  PRECISION_VERTEX: 'highp',
-
-  /**
-   * Default specify float precision in fragment shader.
-   * iOS is best set at highp due to https://github.com/pixijs/pixi.js/issues/3742
-   *
-   * @static
-   * @name PRECISION_FRAGMENT
-   * @memberof PIXI.settings
-   * @type {PIXI.PRECISION}
-   * @default PIXI.PRECISION.MEDIUM
-   */
-  PRECISION_FRAGMENT: isMobile.apple.device ? 'highp' : 'mediump',
-
-  /**
-   * Can we upload the same buffer in a single frame?
-   *
-   * @static
-   * @name CAN_UPLOAD_SAME_BUFFER
-   * @memberof PIXI.settings
-   * @type {boolean}
-   */
-  CAN_UPLOAD_SAME_BUFFER: canUploadSameBuffer(),
-
-  /**
-   * Enables bitmap creation before image load. This feature is experimental.
-   *
-   * @static
-   * @name CREATE_IMAGE_BITMAP
-   * @memberof PIXI.settings
-   * @type {boolean}
-   * @default false
-   */
-  CREATE_IMAGE_BITMAP: false,
-
-  /**
-   * If true PixiJS will Math.floor() x/y values when rendering, stopping pixel interpolation.
-   * Advantages can include sharper image quality (like text) and faster rendering on canvas.
-   * The main disadvantage is movement of objects may appear less smooth.
-   *
-   * @static
-   * @constant
-   * @memberof PIXI.settings
-   * @type {boolean}
-   * @default false
-   */
-  ROUND_PIXELS: false
-};
-exports.settings = settings;
-},{"ismobilejs":"../node_modules/ismobilejs/esm/index.js"}],"../node_modules/eventemitter3/index.js":[function(require,module,exports) {
+},{}],"../node_modules/eventemitter3/index.js":[function(require,module,exports) {
 'use strict';
 
 var has = Object.prototype.hasOwnProperty
@@ -34278,789 +34352,7 @@ function (_super) {
 
 exports.Container = Container;
 Container.prototype.containerUpdateTransform = Container.prototype.updateTransform;
-},{"@pixi/settings":"../node_modules/@pixi/settings/lib/settings.es.js","@pixi/math":"../node_modules/@pixi/math/lib/math.es.js","@pixi/utils":"../node_modules/@pixi/utils/lib/utils.es.js"}],"../node_modules/@pixi/sprite/lib/sprite.es.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Sprite = void 0;
-
-var _constants = require("@pixi/constants");
-
-var _core = require("@pixi/core");
-
-var _display = require("@pixi/display");
-
-var _math = require("@pixi/math");
-
-var _settings = require("@pixi/settings");
-
-var _utils = require("@pixi/utils");
-
-/*!
- * @pixi/sprite - v5.3.8
- * Compiled Sat, 20 Feb 2021 22:28:33 UTC
- *
- * @pixi/sprite is licensed under the MIT License.
- * http://www.opensource.org/licenses/mit-license
- */
-
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation. All rights reserved.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License. You may obtain a copy of the
-License at http://www.apache.org/licenses/LICENSE-2.0
-
-THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-MERCHANTABLITY OR NON-INFRINGEMENT.
-
-See the Apache Version 2.0 License for specific language governing permissions
-and limitations under the License.
-***************************************************************************** */
-
-/* global Reflect, Promise */
-var extendStatics = function (d, b) {
-  extendStatics = Object.setPrototypeOf || {
-    __proto__: []
-  } instanceof Array && function (d, b) {
-    d.__proto__ = b;
-  } || function (d, b) {
-    for (var p in b) {
-      if (b.hasOwnProperty(p)) {
-        d[p] = b[p];
-      }
-    }
-  };
-
-  return extendStatics(d, b);
-};
-
-function __extends(d, b) {
-  extendStatics(d, b);
-
-  function __() {
-    this.constructor = d;
-  }
-
-  d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-}
-
-var tempPoint = new _math.Point();
-var indices = new Uint16Array([0, 1, 2, 0, 2, 3]);
-/**
- * The Sprite object is the base for all textured objects that are rendered to the screen
-*
- * A sprite can be created directly from an image like this:
- *
- * ```js
- * let sprite = PIXI.Sprite.from('assets/image.png');
- * ```
- *
- * The more efficient way to create sprites is using a {@link PIXI.Spritesheet},
- * as swapping base textures when rendering to the screen is inefficient.
- *
- * ```js
- * PIXI.Loader.shared.add("assets/spritesheet.json").load(setup);
- *
- * function setup() {
- *   let sheet = PIXI.Loader.shared.resources["assets/spritesheet.json"].spritesheet;
- *   let sprite = new PIXI.Sprite(sheet.textures["image.png"]);
- *   ...
- * }
- * ```
- *
- * @class
- * @extends PIXI.Container
- * @memberof PIXI
- */
-
-var Sprite =
-/** @class */
-function (_super) {
-  __extends(Sprite, _super);
-  /**
-   * @param {PIXI.Texture} [texture] - The texture for this sprite.
-   */
-
-
-  function Sprite(texture) {
-    var _this = _super.call(this) || this;
-    /**
-     * The anchor point defines the normalized coordinates
-     * in the texture that map to the position of this
-     * sprite.
-     *
-     * By default, this is `(0,0)` (or `texture.defaultAnchor`
-     * if you have modified that), which means the position
-     * `(x,y)` of this `Sprite` will be the top-left corner.
-     *
-     * Note: Updating `texture.defaultAnchor` after
-     * constructing a `Sprite` does _not_ update its anchor.
-     *
-     * {@link https://docs.cocos2d-x.org/cocos2d-x/en/sprites/manipulation.html}
-     *
-     * @default `texture.defaultAnchor`
-     * @member {PIXI.ObservablePoint}
-     * @private
-     */
-
-
-    _this._anchor = new _math.ObservablePoint(_this._onAnchorUpdate, _this, texture ? texture.defaultAnchor.x : 0, texture ? texture.defaultAnchor.y : 0);
-    /**
-     * The texture that the sprite is using
-     *
-     * @private
-     * @member {PIXI.Texture}
-     */
-
-    _this._texture = null;
-    /**
-     * The width of the sprite (this is initially set by the texture)
-     *
-     * @protected
-     * @member {number}
-     */
-
-    _this._width = 0;
-    /**
-     * The height of the sprite (this is initially set by the texture)
-     *
-     * @protected
-     * @member {number}
-     */
-
-    _this._height = 0;
-    /**
-     * The tint applied to the sprite. This is a hex value. A value of 0xFFFFFF will remove any tint effect.
-     *
-     * @private
-     * @member {number}
-     * @default 0xFFFFFF
-     */
-
-    _this._tint = null;
-    /**
-     * The tint applied to the sprite. This is a RGB value. A value of 0xFFFFFF will remove any tint effect.
-     *
-     * @private
-     * @member {number}
-     * @default 16777215
-     */
-
-    _this._tintRGB = null;
-    _this.tint = 0xFFFFFF;
-    /**
-     * The blend mode to be applied to the sprite. Apply a value of `PIXI.BLEND_MODES.NORMAL` to reset the blend mode.
-     *
-     * @member {number}
-     * @default PIXI.BLEND_MODES.NORMAL
-     * @see PIXI.BLEND_MODES
-     */
-
-    _this.blendMode = _constants.BLEND_MODES.NORMAL;
-    /**
-     * Cached tint value so we can tell when the tint is changed.
-     * Value is used for 2d CanvasRenderer.
-     *
-     * @protected
-     * @member {number}
-     * @default 0xFFFFFF
-     */
-
-    _this._cachedTint = 0xFFFFFF;
-    /**
-     * this is used to store the uvs data of the sprite, assigned at the same time
-     * as the vertexData in calculateVertices()
-     *
-     * @private
-     * @member {Float32Array}
-     */
-
-    _this.uvs = null; // call texture setter
-
-    _this.texture = texture || _core.Texture.EMPTY;
-    /**
-     * this is used to store the vertex data of the sprite (basically a quad)
-     *
-     * @private
-     * @member {Float32Array}
-     */
-
-    _this.vertexData = new Float32Array(8);
-    /**
-     * This is used to calculate the bounds of the object IF it is a trimmed sprite
-     *
-     * @private
-     * @member {Float32Array}
-     */
-
-    _this.vertexTrimmedData = null;
-    _this._transformID = -1;
-    _this._textureID = -1;
-    _this._transformTrimmedID = -1;
-    _this._textureTrimmedID = -1; // Batchable stuff..
-    // TODO could make this a mixin?
-
-    _this.indices = indices;
-    /**
-     * Plugin that is responsible for rendering this element.
-     * Allows to customize the rendering process without overriding '_render' & '_renderCanvas' methods.
-     *
-     * @member {string}
-     * @default 'batch'
-     */
-
-    _this.pluginName = 'batch';
-    /**
-     * used to fast check if a sprite is.. a sprite!
-     * @member {boolean}
-     */
-
-    _this.isSprite = true;
-    /**
-     * Internal roundPixels field
-     *
-     * @member {boolean}
-     * @private
-     */
-
-    _this._roundPixels = _settings.settings.ROUND_PIXELS;
-    return _this;
-  }
-  /**
-   * When the texture is updated, this event will fire to update the scale and frame
-   *
-   * @protected
-   */
-
-
-  Sprite.prototype._onTextureUpdate = function () {
-    this._textureID = -1;
-    this._textureTrimmedID = -1;
-    this._cachedTint = 0xFFFFFF; // so if _width is 0 then width was not set..
-
-    if (this._width) {
-      this.scale.x = (0, _utils.sign)(this.scale.x) * this._width / this._texture.orig.width;
-    }
-
-    if (this._height) {
-      this.scale.y = (0, _utils.sign)(this.scale.y) * this._height / this._texture.orig.height;
-    }
-  };
-  /**
-   * Called when the anchor position updates.
-   *
-   * @private
-   */
-
-
-  Sprite.prototype._onAnchorUpdate = function () {
-    this._transformID = -1;
-    this._transformTrimmedID = -1;
-  };
-  /**
-   * calculates worldTransform * vertices, store it in vertexData
-   */
-
-
-  Sprite.prototype.calculateVertices = function () {
-    var texture = this._texture;
-
-    if (this._transformID === this.transform._worldID && this._textureID === texture._updateID) {
-      return;
-    } // update texture UV here, because base texture can be changed without calling `_onTextureUpdate`
-
-
-    if (this._textureID !== texture._updateID) {
-      this.uvs = this._texture._uvs.uvsFloat32;
-    }
-
-    this._transformID = this.transform._worldID;
-    this._textureID = texture._updateID; // set the vertex data
-
-    var wt = this.transform.worldTransform;
-    var a = wt.a;
-    var b = wt.b;
-    var c = wt.c;
-    var d = wt.d;
-    var tx = wt.tx;
-    var ty = wt.ty;
-    var vertexData = this.vertexData;
-    var trim = texture.trim;
-    var orig = texture.orig;
-    var anchor = this._anchor;
-    var w0 = 0;
-    var w1 = 0;
-    var h0 = 0;
-    var h1 = 0;
-
-    if (trim) {
-      // if the sprite is trimmed and is not a tilingsprite then we need to add the extra
-      // space before transforming the sprite coords.
-      w1 = trim.x - anchor._x * orig.width;
-      w0 = w1 + trim.width;
-      h1 = trim.y - anchor._y * orig.height;
-      h0 = h1 + trim.height;
-    } else {
-      w1 = -anchor._x * orig.width;
-      w0 = w1 + orig.width;
-      h1 = -anchor._y * orig.height;
-      h0 = h1 + orig.height;
-    } // xy
-
-
-    vertexData[0] = a * w1 + c * h1 + tx;
-    vertexData[1] = d * h1 + b * w1 + ty; // xy
-
-    vertexData[2] = a * w0 + c * h1 + tx;
-    vertexData[3] = d * h1 + b * w0 + ty; // xy
-
-    vertexData[4] = a * w0 + c * h0 + tx;
-    vertexData[5] = d * h0 + b * w0 + ty; // xy
-
-    vertexData[6] = a * w1 + c * h0 + tx;
-    vertexData[7] = d * h0 + b * w1 + ty;
-
-    if (this._roundPixels) {
-      var resolution = _settings.settings.RESOLUTION;
-
-      for (var i = 0; i < vertexData.length; ++i) {
-        vertexData[i] = Math.round((vertexData[i] * resolution | 0) / resolution);
-      }
-    }
-  };
-  /**
-   * calculates worldTransform * vertices for a non texture with a trim. store it in vertexTrimmedData
-   * This is used to ensure that the true width and height of a trimmed texture is respected
-   */
-
-
-  Sprite.prototype.calculateTrimmedVertices = function () {
-    if (!this.vertexTrimmedData) {
-      this.vertexTrimmedData = new Float32Array(8);
-    } else if (this._transformTrimmedID === this.transform._worldID && this._textureTrimmedID === this._texture._updateID) {
-      return;
-    }
-
-    this._transformTrimmedID = this.transform._worldID;
-    this._textureTrimmedID = this._texture._updateID; // lets do some special trim code!
-
-    var texture = this._texture;
-    var vertexData = this.vertexTrimmedData;
-    var orig = texture.orig;
-    var anchor = this._anchor; // lets calculate the new untrimmed bounds..
-
-    var wt = this.transform.worldTransform;
-    var a = wt.a;
-    var b = wt.b;
-    var c = wt.c;
-    var d = wt.d;
-    var tx = wt.tx;
-    var ty = wt.ty;
-    var w1 = -anchor._x * orig.width;
-    var w0 = w1 + orig.width;
-    var h1 = -anchor._y * orig.height;
-    var h0 = h1 + orig.height; // xy
-
-    vertexData[0] = a * w1 + c * h1 + tx;
-    vertexData[1] = d * h1 + b * w1 + ty; // xy
-
-    vertexData[2] = a * w0 + c * h1 + tx;
-    vertexData[3] = d * h1 + b * w0 + ty; // xy
-
-    vertexData[4] = a * w0 + c * h0 + tx;
-    vertexData[5] = d * h0 + b * w0 + ty; // xy
-
-    vertexData[6] = a * w1 + c * h0 + tx;
-    vertexData[7] = d * h0 + b * w1 + ty;
-  };
-  /**
-  *
-  * Renders the object using the WebGL renderer
-  *
-  * @protected
-  * @param {PIXI.Renderer} renderer - The webgl renderer to use.
-  */
-
-
-  Sprite.prototype._render = function (renderer) {
-    this.calculateVertices();
-    renderer.batch.setObjectRenderer(renderer.plugins[this.pluginName]);
-    renderer.plugins[this.pluginName].render(this);
-  };
-  /**
-   * Updates the bounds of the sprite.
-   *
-   * @protected
-   */
-
-
-  Sprite.prototype._calculateBounds = function () {
-    var trim = this._texture.trim;
-    var orig = this._texture.orig; // First lets check to see if the current texture has a trim..
-
-    if (!trim || trim.width === orig.width && trim.height === orig.height) {
-      // no trim! lets use the usual calculations..
-      this.calculateVertices();
-
-      this._bounds.addQuad(this.vertexData);
-    } else {
-      // lets calculate a special trimmed bounds...
-      this.calculateTrimmedVertices();
-
-      this._bounds.addQuad(this.vertexTrimmedData);
-    }
-  };
-  /**
-   * Gets the local bounds of the sprite object.
-   *
-   * @param {PIXI.Rectangle} [rect] - The output rectangle.
-   * @return {PIXI.Rectangle} The bounds.
-   */
-
-
-  Sprite.prototype.getLocalBounds = function (rect) {
-    // we can do a fast local bounds if the sprite has no children!
-    if (this.children.length === 0) {
-      this._bounds.minX = this._texture.orig.width * -this._anchor._x;
-      this._bounds.minY = this._texture.orig.height * -this._anchor._y;
-      this._bounds.maxX = this._texture.orig.width * (1 - this._anchor._x);
-      this._bounds.maxY = this._texture.orig.height * (1 - this._anchor._y);
-
-      if (!rect) {
-        if (!this._localBoundsRect) {
-          this._localBoundsRect = new _math.Rectangle();
-        }
-
-        rect = this._localBoundsRect;
-      }
-
-      return this._bounds.getRectangle(rect);
-    }
-
-    return _super.prototype.getLocalBounds.call(this, rect);
-  };
-  /**
-   * Tests if a point is inside this sprite
-   *
-   * @param {PIXI.IPointData} point - the point to test
-   * @return {boolean} the result of the test
-   */
-
-
-  Sprite.prototype.containsPoint = function (point) {
-    this.worldTransform.applyInverse(point, tempPoint);
-    var width = this._texture.orig.width;
-    var height = this._texture.orig.height;
-    var x1 = -width * this.anchor.x;
-    var y1 = 0;
-
-    if (tempPoint.x >= x1 && tempPoint.x < x1 + width) {
-      y1 = -height * this.anchor.y;
-
-      if (tempPoint.y >= y1 && tempPoint.y < y1 + height) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-  /**
-   * Destroys this sprite and optionally its texture and children
-   *
-   * @param {object|boolean} [options] - Options parameter. A boolean will act as if all options
-   *  have been set to that value
-   * @param {boolean} [options.children=false] - if set to true, all the children will have their destroy
-   *      method called as well. 'options' will be passed on to those calls.
-   * @param {boolean} [options.texture=false] - Should it destroy the current texture of the sprite as well
-   * @param {boolean} [options.baseTexture=false] - Should it destroy the base texture of the sprite as well
-   */
-
-
-  Sprite.prototype.destroy = function (options) {
-    _super.prototype.destroy.call(this, options);
-
-    this._texture.off('update', this._onTextureUpdate, this);
-
-    this._anchor = null;
-    var destroyTexture = typeof options === 'boolean' ? options : options && options.texture;
-
-    if (destroyTexture) {
-      var destroyBaseTexture = typeof options === 'boolean' ? options : options && options.baseTexture;
-
-      this._texture.destroy(!!destroyBaseTexture);
-    }
-
-    this._texture = null;
-  }; // some helper functions..
-
-  /**
-   * Helper function that creates a new sprite based on the source you provide.
-   * The source can be - frame id, image url, video url, canvas element, video element, base texture
-   *
-   * @static
-   * @param {string|PIXI.Texture|HTMLCanvasElement|HTMLVideoElement} source - Source to create texture from
-   * @param {object} [options] - See {@link PIXI.BaseTexture}'s constructor for options.
-   * @return {PIXI.Sprite} The newly created sprite
-   */
-
-
-  Sprite.from = function (source, options) {
-    var texture = source instanceof _core.Texture ? source : _core.Texture.from(source, options);
-    return new Sprite(texture);
-  };
-
-  Object.defineProperty(Sprite.prototype, "roundPixels", {
-    get: function () {
-      return this._roundPixels;
-    },
-
-    /**
-     * If true PixiJS will Math.floor() x/y values when rendering, stopping pixel interpolation.
-     * Advantages can include sharper image quality (like text) and faster rendering on canvas.
-     * The main disadvantage is movement of objects may appear less smooth.
-     * To set the global default, change {@link PIXI.settings.ROUND_PIXELS}
-     *
-     * @member {boolean}
-     * @default false
-     */
-    set: function (value) {
-      if (this._roundPixels !== value) {
-        this._transformID = -1;
-      }
-
-      this._roundPixels = value;
-    },
-    enumerable: false,
-    configurable: true
-  });
-  Object.defineProperty(Sprite.prototype, "width", {
-    /**
-     * The width of the sprite, setting this will actually modify the scale to achieve the value set
-     *
-     * @member {number}
-     */
-    get: function () {
-      return Math.abs(this.scale.x) * this._texture.orig.width;
-    },
-    set: function (value) {
-      var s = (0, _utils.sign)(this.scale.x) || 1;
-      this.scale.x = s * value / this._texture.orig.width;
-      this._width = value;
-    },
-    enumerable: false,
-    configurable: true
-  });
-  Object.defineProperty(Sprite.prototype, "height", {
-    /**
-     * The height of the sprite, setting this will actually modify the scale to achieve the value set
-     *
-     * @member {number}
-     */
-    get: function () {
-      return Math.abs(this.scale.y) * this._texture.orig.height;
-    },
-    set: function (value) {
-      var s = (0, _utils.sign)(this.scale.y) || 1;
-      this.scale.y = s * value / this._texture.orig.height;
-      this._height = value;
-    },
-    enumerable: false,
-    configurable: true
-  });
-  Object.defineProperty(Sprite.prototype, "anchor", {
-    /**
-     * The anchor sets the origin point of the sprite. The default value is taken from the {@link PIXI.Texture|Texture}
-     * and passed to the constructor.
-     *
-     * The default is `(0,0)`, this means the sprite's origin is the top left.
-     *
-     * Setting the anchor to `(0.5,0.5)` means the sprite's origin is centered.
-     *
-     * Setting the anchor to `(1,1)` would mean the sprite's origin point will be the bottom right corner.
-     *
-     * If you pass only single parameter, it will set both x and y to the same value as shown in the example below.
-     *
-     * @example
-     * const sprite = new PIXI.Sprite(texture);
-     * sprite.anchor.set(0.5); // This will set the origin to center. (0.5) is same as (0.5, 0.5).
-     *
-     * @member {PIXI.ObservablePoint}
-     */
-    get: function () {
-      return this._anchor;
-    },
-    set: function (value) {
-      this._anchor.copyFrom(value);
-    },
-    enumerable: false,
-    configurable: true
-  });
-  Object.defineProperty(Sprite.prototype, "tint", {
-    /**
-     * The tint applied to the sprite. This is a hex value.
-     * A value of 0xFFFFFF will remove any tint effect.
-     *
-     * @member {number}
-     * @default 0xFFFFFF
-     */
-    get: function () {
-      return this._tint;
-    },
-    set: function (value) {
-      this._tint = value;
-      this._tintRGB = (value >> 16) + (value & 0xff00) + ((value & 0xff) << 16);
-    },
-    enumerable: false,
-    configurable: true
-  });
-  Object.defineProperty(Sprite.prototype, "texture", {
-    /**
-     * The texture that the sprite is using
-     *
-     * @member {PIXI.Texture}
-     */
-    get: function () {
-      return this._texture;
-    },
-    set: function (value) {
-      if (this._texture === value) {
-        return;
-      }
-
-      if (this._texture) {
-        this._texture.off('update', this._onTextureUpdate, this);
-      }
-
-      this._texture = value || _core.Texture.EMPTY;
-      this._cachedTint = 0xFFFFFF;
-      this._textureID = -1;
-      this._textureTrimmedID = -1;
-
-      if (value) {
-        // wait for the texture to load
-        if (value.baseTexture.valid) {
-          this._onTextureUpdate();
-        } else {
-          value.once('update', this._onTextureUpdate, this);
-        }
-      }
-    },
-    enumerable: false,
-    configurable: true
-  });
-  return Sprite;
-}(_display.Container);
-
-exports.Sprite = Sprite;
-},{"@pixi/constants":"../node_modules/@pixi/constants/lib/constants.es.js","@pixi/core":"../node_modules/@pixi/core/lib/core.es.js","@pixi/display":"../node_modules/@pixi/display/lib/display.es.js","@pixi/math":"../node_modules/@pixi/math/lib/math.es.js","@pixi/settings":"../node_modules/@pixi/settings/lib/settings.es.js","@pixi/utils":"../node_modules/@pixi/utils/lib/utils.es.js"}],"matter-pixi/physics_objects/physics_sprite.ts":[function(require,module,exports) {
-'use strict';
-
-var __extends = this && this.__extends || function () {
-  var _extendStatics = function extendStatics(d, b) {
-    _extendStatics = Object.setPrototypeOf || {
-      __proto__: []
-    } instanceof Array && function (d, b) {
-      d.__proto__ = b;
-    } || function (d, b) {
-      for (var p in b) {
-        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
-      }
-    };
-
-    return _extendStatics(d, b);
-  };
-
-  return function (d, b) {
-    if (typeof b !== "function" && b !== null) throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-
-    _extendStatics(d, b);
-
-    function __() {
-      this.constructor = d;
-    }
-
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-  };
-}();
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.PhysicsSprite = void 0;
-
-var sprite_1 = require("@pixi/sprite");
-
-var matter_js_1 = require("matter-js");
-/**
- * Extends the pixi sprite class to include a Matter body and its properties.
- */
-
-
-var PhysicsSprite =
-/** @class */
-function (_super) {
-  __extends(PhysicsSprite, _super);
-  /**
-   * @param {Texture} texture The texture of the sprite.
-   * @param {SpriteOptions} spriteOptions The options to define the initial properties of the sprite.
-   * @param {PhysicsOptions} physicsOptions The options to apply to the sprite's body.
-   */
-
-
-  function PhysicsSprite(texture, spriteOptions, physicsOptions) {
-    if (spriteOptions === void 0) {
-      spriteOptions = {};
-    }
-
-    if (physicsOptions === void 0) {
-      physicsOptions = {};
-    }
-
-    var _this = _super.call(this, texture) || this;
-
-    _this.anchor.x = 0.5;
-    _this.anchor.y = 0.5;
-    _this.position.x = spriteOptions.x || 0;
-    _this.position.y = spriteOptions.y || 0;
-    if (spriteOptions.width) _this.width = spriteOptions.width;
-    if (spriteOptions.height) _this.height = spriteOptions.height;
-    _this.physicsOptions = physicsOptions;
-    console.log(_this.position.x, _this.position.y);
-    if (spriteOptions.isCircle) _this._body = matter_js_1.Bodies.circle(_this.x, _this.y, _this.width / 2, _this.physicsOptions);else _this._body = matter_js_1.Bodies.rectangle(_this.x, _this.y, _this.width, _this.height, _this.physicsOptions);
-    return _this;
-  }
-
-  Object.defineProperty(PhysicsSprite.prototype, "body", {
-    /**
-     * Returns the physics body of the sprite.
-     *
-     * @returns {Body}
-     */
-    get: function get() {
-      return this._body;
-    },
-    enumerable: false,
-    configurable: true
-  });
-  /**
-   * Updates the position of the sprite according to where its body should be.
-   */
-
-  PhysicsSprite.prototype.update = function () {
-    this.position.x = this._body.position.x;
-    this.position.y = this._body.position.y;
-    this.rotation = this._body.angle;
-  };
-
-  return PhysicsSprite;
-}(sprite_1.Sprite);
-
-exports.PhysicsSprite = PhysicsSprite;
-},{"@pixi/sprite":"../node_modules/@pixi/sprite/lib/sprite.es.js","matter-js":"../node_modules/matter-js/build/matter.js"}],"../node_modules/@pixi/graphics/lib/graphics.es.js":[function(require,module,exports) {
+},{"@pixi/settings":"../node_modules/@pixi/settings/lib/settings.es.js","@pixi/math":"../node_modules/@pixi/math/lib/math.es.js","@pixi/utils":"../node_modules/@pixi/utils/lib/utils.es.js"}],"../node_modules/@pixi/graphics/lib/graphics.es.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -39007,10 +38299,11 @@ function (_super) {
   /**
    * @param {GraphicsOptions} graphicsOptions The options for the appearance and initial position of the graphics object.
    * @param {PhysicsOptions} physicsOptions The options to apply to the graphic object's body.
+   * @param {update}
    */
 
 
-  function PhysicsGraphics(graphicsOptions, physicsOptions) {
+  function PhysicsGraphics(graphicsOptions, physicsOptions, update) {
     if (physicsOptions === void 0) {
       physicsOptions = {};
     }
@@ -39038,38 +38331,11 @@ function (_super) {
     var halfHeight = _this.graphicsOptions.height / 2;
     _this.pivot.x = halfWidth;
     _this.pivot.y = halfHeight;
+    _this._update = update; // this._createShape();
 
-    _this._createShape();
-
-    if (_this.graphicsOptions.radius) _this._body = matter_js_1.Bodies.circle(_this.graphicsOptions.x, _this.graphicsOptions.y, _this.graphicsOptions.width, _this.physicsOptions);else _this._body = matter_js_1.Bodies.rectangle(_this.graphicsOptions.x + halfWidth, _this.graphicsOptions.y + halfHeight, _this.graphicsOptions.width, _this.graphicsOptions.height, _this.physicsOptions);
+    if (_this.graphicsOptions.radius) _this._body = matter_js_1.Bodies.circle(_this.graphicsOptions.x, _this.graphicsOptions.y, _this.graphicsOptions.radius, _this.physicsOptions);else _this._body = matter_js_1.Bodies.rectangle(_this.graphicsOptions.x + halfWidth, _this.graphicsOptions.y + halfHeight, _this.graphicsOptions.width, _this.graphicsOptions.height, _this.physicsOptions);
     return _this;
   }
-  /**
-   * Creates the graphics object with the style options provided.
-   *
-   * @private
-   */
-
-
-  PhysicsGraphics.prototype._createShape = function () {
-    this.beginFill(this.graphicsOptions.fill);
-    this.lineStyle(this.graphicsOptions.lineWidth, this.graphicsOptions.lineColor);
-
-    if (this.graphicsOptions.radius) {
-      // If the graphics options has a value set for radius then we disregard width and
-      // height and assume it's a circle.
-      this.drawCircle(this.graphicsOptions.x, this.graphicsOptions.y, this.graphicsOptions.radius);
-    } else {
-      if (!this.graphicsOptions.width || !this.graphicsOptions.height) {
-        // No radius and no width or height means we can't do anything so we error and
-        // return early.
-        console.error('No width or height provided for rectangle');
-        return;
-      }
-
-      this.drawRect(this.x, this.y, this.graphicsOptions.width, this.graphicsOptions.height);
-    }
-  };
 
   Object.defineProperty(PhysicsGraphics.prototype, "body", {
     /**
@@ -39089,9 +38355,10 @@ function (_super) {
    */
 
   PhysicsGraphics.prototype.update = function () {
-    this.position.x = this._body.position.x;
-    this.position.y = this._body.position.y;
-    this.rotation = this._body.angle;
+    this._update({
+      position: this._body.position,
+      rotation: this._body.angle
+    });
   };
 
   return PhysicsGraphics;
@@ -39132,45 +38399,39 @@ Object.defineProperty(exports, "PhysicsGraphics", {
     return physics_graphics_1.PhysicsGraphics;
   }
 });
-},{"./pixi-matter":"matter-pixi/pixi-matter.ts","./physics_objects/physics_sprite":"matter-pixi/physics_objects/physics_sprite.ts","./physics_objects/physics_graphics":"matter-pixi/physics_objects/physics_graphics.ts"}],"utils.js":[function(require,module,exports) {
+},{"./pixi-matter":"matter-pixi/pixi-matter.ts","./physics_objects/physics_sprite":"matter-pixi/physics_objects/physics_sprite.ts","./physics_objects/physics_graphics":"matter-pixi/physics_objects/physics_graphics.ts"}],"utils.ts":[function(require,module,exports) {
 "use strict";
+
+var __assign = this && this.__assign || function () {
+  __assign = Object.assign || function (t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+
+      for (var p in s) {
+        if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+      }
+    }
+
+    return t;
+  };
+
+  return __assign.apply(this, arguments);
+};
+
+var __spreadArray = this && this.__spreadArray || function (to, from) {
+  for (var i = 0, il = from.length, j = to.length; i < il; i++, j++) {
+    to[j] = from[i];
+  }
+
+  return to;
+};
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.loadScript = loadScript;
-exports.hitTestRectangle = hitTestRectangle;
-exports.textureRecources = textureRecources;
-exports.genkwaFunc = genkwaFunc;
-exports.upgradeGraphics = exports.defineProperty = exports.defineGetter = void 0;
+exports.upgradeGraphics = exports.defineProperty = exports.genkwaFunc = exports.defineGetter = exports.textureRecources = exports.hitTestRectangle = exports.loadScript = void 0;
 
-var _matterPixi = require("./matter-pixi");
-
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
-
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-
-function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
-
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+var matter_pixi_1 = require("./matter-pixi");
 
 function loadScript(src, varName) {
   if (window[varName]) {
@@ -39196,8 +38457,9 @@ function loadScript(src, varName) {
     document.body.appendChild(el);
   });
   return res;
-} // 碰撞检测函数
+}
 
+exports.loadScript = loadScript; // 碰撞检测函数
 
 function hitTestRectangle(r1, r2) {
   // 如果r2是坐标点
@@ -39245,8 +38507,9 @@ function hitTestRectangle(r1, r2) {
 
 
   return hit;
-} // 加载纹理
+}
 
+exports.hitTestRectangle = hitTestRectangle; // 加载纹理
 
 var JsonLoadedMap = {};
 
@@ -39255,7 +38518,7 @@ function textureRecources(resource) {
     var list;
 
     if (Array.isArray(resource)) {
-      list = _toConsumableArray(resource);
+      list = __spreadArray([], resource);
       resource = list[0];
     }
 
@@ -39291,19 +38554,21 @@ function textureRecources(resource) {
   }
 }
 
+exports.textureRecources = textureRecources;
 var Sk = window.Sk; // getter函数
 
 var defineGetter = function defineGetter(func) {
   return Sk.misceval.callsimOrSuspend(Sk.builtins.property, new Sk.builtin.func(func), new Sk.builtin.func(function () {}));
-}; // 生成kwargs函数
+};
 
-
-exports.defineGetter = defineGetter;
+exports.defineGetter = defineGetter; // 生成kwargs函数
 
 function genkwaFunc(func, isJsArgs) {
   var kwaFunc = function kwaFunc(kwa) {
-    for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      args[_key - 1] = arguments[_key];
+    var args = [];
+
+    for (var _i = 1; _i < arguments.length; _i++) {
+      args[_i - 1] = arguments[_i];
     }
 
     if (!isJsArgs) {
@@ -39317,8 +38582,9 @@ function genkwaFunc(func, isJsArgs) {
 
   kwaFunc['co_kwargs'] = true;
   return kwaFunc;
-} // 监听属性getter/setter
+}
 
+exports.genkwaFunc = genkwaFunc; // 监听属性getter/setter
 
 var defineProperty = function defineProperty(obj, property) {
   return Sk.misceval.callsimOrSuspend(Sk.builtins.property, new Sk.builtin.func(function (self) {
@@ -39334,109 +38600,137 @@ var defineProperty = function defineProperty(obj, property) {
       self[obj][property] = val.v;
     }
   }));
-}; // 拓展graphics功能
+};
 
-
-exports.defineProperty = defineProperty;
+exports.defineProperty = defineProperty; // 拓展graphics功能
 
 var upgradeGraphics = function upgradeGraphics(mod, app, pixiMatter, func) {
   return new Sk.builtin.func(function (self) {
-    for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-      args[_key2 - 1] = arguments[_key2];
+    var args = [];
+
+    for (var _i = 1; _i < arguments.length; _i++) {
+      args[_i - 1] = arguments[_i];
     }
 
     return Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function ($gbl, $loc) {
       $loc.__init__ = new Sk.builtin.func(function (selfGraph) {
         selfGraph.graph = new PIXI.Graphics();
         var graph = selfGraph.graph;
-        func.apply(void 0, [self, graph].concat(args));
+        func.apply(void 0, __spreadArray([self, graph], args));
+        var halfWidth = selfGraph.graph.width / 2;
+        var halfHeight = selfGraph.graph.height / 2;
+        var x = selfGraph.graph.graphicsData[0].shape.x;
+        var y = selfGraph.graph.graphicsData[0].shape.y;
+
+        if (selfGraph.graph.isCircle) {
+          selfGraph.graph.pivot.set(halfWidth * 2, halfHeight * 2);
+          selfGraph.graph.position.set(halfWidth * 2, halfWidth * 2);
+        } else {
+          selfGraph.graph.pivot.set(x + halfWidth, y + halfHeight);
+          selfGraph.graph.position.set(x + halfWidth, y + halfHeight);
+        }
       });
-      $loc.rotation = defineProperty(function (selfGraph) {
+      $loc.rotation = exports.defineProperty(function (selfGraph) {
         return Sk.ffi.remapToPy(selfGraph.rotation);
       }, function (selfGraph, val) {
         if (selfGraph.physicGraphics) {
           Matter.Body.setAngle(selfGraph.physicGraphics._body, val.v);
         } else {
+          // selfGraph.graph.position.set(selfGraph.graph.x + pivotX, selfGraph.graph.y - pivotY)
           selfGraph.graph.rotation = val.v;
         }
       });
       $loc.physicsImpostor = new Sk.builtin.func(genkwaFunc(function (args, kwa) {
         kwa = Sk.ffi.remapToJs(kwa);
-
-        var _args = _slicedToArray(args, 3),
-            selfGraph = _args[0],
-            is_static = _args[1],
-            physicsOptions = _args[2];
-
+        var selfGraph = args[0],
+            is_static = args[1],
+            physicsOptions = args[2];
         is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
         var is_circle = false;
         physicsOptions = Sk.ffi.remapToJs(physicsOptions || kwa.physicsOptions) || {};
-        var _selfGraph$graph = selfGraph.graph,
-            graphicsData = _selfGraph$graph.graphicsData,
-            width = _selfGraph$graph.width,
-            height = _selfGraph$graph.height,
-            line = _selfGraph$graph.line,
-            rotation = _selfGraph$graph.rotation;
+        var _a = selfGraph.graph,
+            graphicsData = _a.graphicsData,
+            width = _a.width,
+            height = _a.height,
+            line = _a.line,
+            rotation = _a.rotation;
+        var extra = {};
 
         if (selfGraph.graph.isCircle) {
           is_circle = true;
-          console.log('width', width);
+          extra.radius = graphicsData[0].shape.radius;
         }
-
-        var fill = {};
 
         if (selfGraph.graph.isFilled) {
-          fill.fill = graphicsData[0].fillStyle.color;
+          extra.fill = graphicsData[0].fillStyle.color;
         }
 
-        selfGraph.physicGraphics = new _matterPixi.PhysicsGraphics(_objectSpread({
+        selfGraph.physicGraphics = new matter_pixi_1.PhysicsGraphics(__assign({
           x: graphicsData[0].shape.x,
           y: graphicsData[0].shape.y,
           width: width,
           height: height,
           lineWidth: line.width,
-          lineColor: line.color,
-          radius: graphicsData[0].shape.radius
-        }, fill), _objectSpread({
+          lineColor: line.color
+        }, extra), __assign({
           isCircle: is_circle,
           isStatic: is_static
-        }, physicsOptions));
+        }, physicsOptions), function (_a) {
+          var position = _a.position,
+              rotation = _a.rotation;
+          selfGraph.graph.position = position;
+          selfGraph.graph.rotation = rotation;
+        });
         Matter.Body.setAngle(selfGraph.physicGraphics._body, rotation);
-        pixiMatter.addToWorld(selfGraph.physicGraphics);
-        app.stage.removeChild(selfGraph.graph);
-        app.stage.addChild(selfGraph.physicGraphics);
+        pixiMatter.addToWorld(selfGraph.physicGraphics); // app.stage.removeChild(selfGraph.graph);
+        // app.stage.addChild(selfGraph.physicGraphics);
       }, true));
     }));
   });
 };
 
 exports.upgradeGraphics = upgradeGraphics;
-},{"./matter-pixi":"matter-pixi/index.ts"}],"pygame-zero.js":[function(require,module,exports) {
+},{"./matter-pixi":"matter-pixi/index.ts"}],"pygame-zero.ts":[function(require,module,exports) {
 "use strict";
 
-var _utils = require("./utils");
+var __makeTemplateObject = this && this.__makeTemplateObject || function (cooked, raw) {
+  if (Object.defineProperty) {
+    Object.defineProperty(cooked, "raw", {
+      value: raw
+    });
+  } else {
+    cooked.raw = raw;
+  }
 
-var _matterPixi = require("./matter-pixi");
+  return cooked;
+};
 
-var _templateObject;
+var __assign = this && this.__assign || function () {
+  __assign = Object.assign || function (t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
 
-function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
+      for (var p in s) {
+        if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+      }
+    }
 
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
+    return t;
+  };
 
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+  return __assign.apply(this, arguments);
+};
 
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
-
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 var Sk = window.Sk;
 var PIXI = window.PIXI;
-var pixiMatter = new _matterPixi.PixiMatter(); // 17中标准颜色名对应的色值
+
+var utils_1 = require("./utils");
+
+var matter_pixi_1 = require("./matter-pixi"); // 17中标准颜色名对应的色值
+
 
 var ColorNameMap = {
   aqua: '#00FFFF',
@@ -39507,12 +38801,13 @@ window.$builtinmodule = function () {
     height: height
   });
   var app = window.PGZApp;
+  var pixiMatter = new matter_pixi_1.PixiMatter({
+    stage: app.view
+  });
 
   window.PyGameZero._onRunning(app);
 
-  window.PyGameZero.container.appendChild(app.view);
-  var halfWidth = Math.round(app.view.width / 2);
-  var halfHeight = Math.round(app.view.height / 2); // 笛卡尔坐标系转换
+  window.PyGameZero.container.appendChild(app.view); // 笛卡尔坐标系转换
 
   function transX(x, isReserve) {
     // if (isReserve) {
@@ -39566,12 +38861,8 @@ window.$builtinmodule = function () {
     }
   }
 
-  mod.WIDTH = (0, _utils.defineGetter)(function () {
-    return Sk.ffi.remapToPy(app.view.width);
-  });
-  mod.HEIGHT = (0, _utils.defineGetter)(function () {
-    return Sk.ffi.remapToPy(app.view.height);
-  }); // 角色类
+  mod.WIDTH = Sk.ffi.remapToPy(app.view.width);
+  mod.HEIGHT = Sk.ffi.remapToPy(app.view.height); // 角色类
 
   mod.Actor = Sk.misceval.buildClass(mod, function ($gbl, $loc) {
     // $loc.__init__就是构造器
@@ -39579,7 +38870,7 @@ window.$builtinmodule = function () {
       return new Sk.misceval.promiseToSuspension(new Promise(function (resolve) {
         actorName = Sk.ffi.remapToJs(actorName);
         pos = Sk.ffi.remapToJs(pos) || [];
-        (0, _utils.textureRecources)(actorName || "./assets/".concat(actorName.v, "/index.json")).then(function (texture) {
+        utils_1.textureRecources(actorName || "./assets/" + actorName.v + "/index.json").then(function (texture) {
           var sprite = new Sprite(texture);
           sprite.zOrder = 1;
           self.sprite = sprite;
@@ -39591,7 +38882,7 @@ window.$builtinmodule = function () {
         });
       }));
     });
-    $loc.x = (0, _utils.defineProperty)(function (self) {
+    $loc.x = utils_1.defineProperty(function (self) {
       return Sk.ffi.remapToPy(transX(self.sprite.x, true));
     }, function (self, val) {
       if (self.physicSprite) {
@@ -39603,7 +38894,7 @@ window.$builtinmodule = function () {
         self.sprite.x = transX(val.v);
       }
     });
-    $loc.y = (0, _utils.defineProperty)(function (self) {
+    $loc.y = utils_1.defineProperty(function (self) {
       return Sk.ffi.remapToPy(transY(self.sprite.y, true));
     }, function (self, val) {
       if (self.physicSprite) {
@@ -39615,29 +38906,24 @@ window.$builtinmodule = function () {
         self.sprite.y = transX(val.v);
       }
     });
-    $loc.width = (0, _utils.defineProperty)('sprite', 'width');
-    $loc.height = (0, _utils.defineProperty)('sprite', 'height');
-    $loc.size = (0, _utils.defineProperty)(function (self) {
+    $loc.width = utils_1.defineProperty('sprite', 'width');
+    $loc.height = utils_1.defineProperty('sprite', 'height');
+    $loc.size = utils_1.defineProperty(function (self) {
       return Sk.ffi.remapToPy([self.sprite.width, self.sprite.height]);
     }, function (self, val) {
       var pos = Sk.ffi.remapToJs(val);
-
-      var _pos = _slicedToArray(pos, 2),
-          width = _pos[0],
-          height = _pos[1];
-
+      var width = pos[0],
+          height = pos[1];
       self.sprite.width = width;
       self.sprite.height = height;
       self['sprite']['pos'] = [width, height];
     });
-    $loc.pos = (0, _utils.defineProperty)(function (self) {
+    $loc.pos = utils_1.defineProperty(function (self) {
       return Sk.ffi.remapToPy(transPos([self.sprite.x, self.sprite.y], true));
     }, function (self, val) {
       var pos = transPos(Sk.ffi.remapToJs(val));
-
-      var _pos2 = _slicedToArray(pos, 2),
-          x = _pos2[0],
-          y = _pos2[1];
+      var x = pos[0],
+          y = pos[1];
 
       if (self.physicSprite) {
         Matter.Body.setPosition(self.physicSprite._body, {
@@ -39650,23 +38936,23 @@ window.$builtinmodule = function () {
         self['sprite']['pos'] = [x, y];
       }
     });
-    $loc.angle = (0, _utils.defineProperty)('sprite', 'angle');
-    $loc.show = (0, _utils.defineProperty)('sprite', 'visible');
-    $loc.image = (0, _utils.defineProperty)(function (self) {
+    $loc.angle = utils_1.defineProperty('sprite', 'angle');
+    $loc.show = utils_1.defineProperty('sprite', 'visible');
+    $loc.image = utils_1.defineProperty(function (self) {
       return Sk.ffi.remapToPy(self['sprite']['texture']);
     }, function (self, val) {
       return new Sk.misceval.promiseToSuspension(new Promise(function (resolve) {
-        (0, _utils.textureRecources)(val.v).then(function (texture) {
+        utils_1.textureRecources(val.v).then(function (texture) {
           self['sprite']['texture'] = texture;
           resolve();
         });
       }));
     });
-    $loc.frame = (0, _utils.defineProperty)(function (self) {
+    $loc.frame = utils_1.defineProperty(function (self) {
       return Sk.ffi.remapToPy(self['sprite']['texture']);
     }, function (self, val) {
       return new Sk.misceval.promiseToSuspension(new Promise(function (resolve) {
-        (0, _utils.textureRecources)(self.actorName[val.v - 1] || "./assets/".concat(self.actorName, "/\u9020\u578B").concat(val.v, ".png")).then(function (texture) {
+        utils_1.textureRecources(self.actorName[val.v - 1] || "./assets/" + self.actorName + "/\u9020\u578B" + val.v + ".png").then(function (texture) {
           self['sprite']['texture'] = texture;
           resolve();
         });
@@ -39690,13 +38976,13 @@ window.$builtinmodule = function () {
       return Sk.ffi.remapToPy(Math.round(Math.asin(y / z) / Math.PI * 180));
     });
     $loc.collide_point = new Sk.builtin.func(function (self, pos) {
-      return (0, _utils.hitTestRectangle)(self.sprite, transPos(Sk.ffi.remapToJs(pos)));
+      return utils_1.hitTestRectangle(self.sprite, transPos(Sk.ffi.remapToJs(pos)));
     });
     $loc.collide_actor = new Sk.builtin.func(function (self, actor) {
-      return (0, _utils.hitTestRectangle)(self.sprite, actor.sprite);
+      return utils_1.hitTestRectangle(self.sprite, actor.sprite);
     });
     $loc.colliderect = new Sk.builtin.func(function (self, actor) {
-      return (0, _utils.hitTestRectangle)(self.sprite, actor.sprite);
+      return utils_1.hitTestRectangle(self.sprite, actor.sprite);
     });
     $loc.remove = new Sk.builtin.func(function (self) {
       app.stage.removeChild(self.sprite);
@@ -39705,33 +38991,20 @@ window.$builtinmodule = function () {
       app.stage.addChild(self.physicSprite || self.sprite);
     }); // 物理引擎
 
-    $loc.physicsImpostor = new Sk.builtin.func((0, _utils.genkwaFunc)(function (args, kwa) {
+    $loc.physicsImpostor = new Sk.builtin.func(utils_1.genkwaFunc(function (args, kwa) {
       // args = Sk.ffi.remapToJs(args);
       kwa = Sk.ffi.remapToJs(kwa);
-
-      var _args = _slicedToArray(args, 3),
-          self = _args[0],
-          is_circle = _args[1],
-          is_static = _args[2];
-
+      var self = args[0],
+          is_circle = args[1],
+          is_static = args[2],
+          physicsOptions = args[3];
       is_circle = Sk.ffi.remapToJs(is_circle || kwa.is_circle) || false;
       is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
-      var _self$sprite = self.sprite,
-          x = _self$sprite.x,
-          y = _self$sprite.y,
-          width = _self$sprite.width,
-          height = _self$sprite.height,
-          texture = _self$sprite.texture;
-      self.physicSprite = new _matterPixi.PhysicsSprite(texture, {
-        x: x,
-        y: y,
-        width: width,
-        height: height,
+      physicsOptions = Sk.ffi.remapToJs(physicsOptions || kwa.physicsOptions) || {};
+      self.physicSprite = new matter_pixi_1.PhysicsSprite(self.sprite, __assign({
         isCircle: is_circle,
         isStatic: is_static
-      }); // const ground = new PhysicsGraphics({ x: 0, y: 300, width: 500, height: 50, fill: 0xff0000 }, { isStatic: true,angle: Math.PI * 0.06 });
-      // app.stage.addChild(ground);
-
+      }, physicsOptions));
       pixiMatter.addToWorld(self.physicSprite);
     }, true));
   }, 'Actor'); // 矩形类
@@ -39752,10 +39025,10 @@ window.$builtinmodule = function () {
         height: size[1]
       };
     });
-    $loc.pos = (0, _utils.defineGetter)(function (self) {
+    $loc.pos = utils_1.defineGetter(function (self) {
       return Sk.ffi.remapToPy(transPos(self.pos, true));
     });
-    $loc.size = (0, _utils.defineGetter)(function (self) {
+    $loc.size = utils_1.defineGetter(function (self) {
       return Sk.ffi.remapToPy(self.size);
     });
   }, 'Rect', []); // 画笔类
@@ -39773,6 +39046,8 @@ window.$builtinmodule = function () {
     // })
 
     $loc.line = new Sk.builtin.func(function (self, start, end, color) {
+      var graph = new PIXI.Graphics();
+      self.graphMap.push(graph);
       color = transColor(Sk.ffi.remapToJs(color));
       start = Sk.ffi.remapToJs(start);
       end = Sk.ffi.remapToJs(end);
@@ -39781,7 +39056,8 @@ window.$builtinmodule = function () {
       graph.lineTo(end[0], end[1]);
       app.stage.addChild(graph);
     });
-    $loc.circle = (0, _utils.upgradeGraphics)(mod, app, pixiMatter, function (self, graph, pos, radius, color) {
+    $loc.circle = utils_1.upgradeGraphics(mod, app, pixiMatter, function (self, graph, pos, radius, color) {
+      self.graphMap.push(graph);
       color = transColor(Sk.ffi.remapToJs(color));
       pos = transPos(Sk.ffi.remapToJs(pos));
       graph.lineStyle(self.size, color, 1);
@@ -39789,7 +39065,8 @@ window.$builtinmodule = function () {
       graph.isCircle = true;
       app.stage.addChild(graph);
     });
-    $loc.filled_circle = (0, _utils.upgradeGraphics)(mod, app, pixiMatter, function (self, graph, pos, radius, color) {
+    $loc.filled_circle = utils_1.upgradeGraphics(mod, app, pixiMatter, function (self, graph, pos, radius, color) {
+      self.graphMap.push(graph);
       color = transColor(Sk.ffi.remapToJs(color));
       pos = transPos(Sk.ffi.remapToJs(pos));
       graph.lineStyle(0);
@@ -39800,10 +39077,14 @@ window.$builtinmodule = function () {
       graph.isFilled = true;
       app.stage.addChild(graph);
     });
-    $loc.rect = (0, _utils.upgradeGraphics)(mod, app, pixiMatter, function (self, graph) {
-      for (var _len = arguments.length, args = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-        args[_key - 2] = arguments[_key];
+    $loc.rect = utils_1.upgradeGraphics(mod, app, pixiMatter, function (self, graph) {
+      var args = [];
+
+      for (var _i = 2; _i < arguments.length; _i++) {
+        args[_i - 2] = arguments[_i];
       }
+
+      self.graphMap.push(graph);
 
       if (Sk.abstr.typeName(args[0]) === "Rect") {
         var rect = args[0],
@@ -39811,7 +39092,8 @@ window.$builtinmodule = function () {
         graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
         graph.drawRect(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
       } else {
-        var left, top;
+        var left = void 0,
+            top = void 0;
         var leftTop = Sk.ffi.remapToJs(args[0]);
 
         if (Array.isArray(leftTop)) {
@@ -39825,23 +39107,27 @@ window.$builtinmodule = function () {
           args.shift();
         }
 
-        var _width = args[0],
-            _height = args[1],
-            _color = args[2];
-        _width = Sk.ffi.remapToJs(_width);
-        _height = Sk.ffi.remapToJs(_height);
-        graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(_color)), 1);
-        graph.drawRect(transX(left), transY(top), _width, _height); // setTimeout(() => {
+        var width_1 = args[0],
+            height_1 = args[1],
+            color = args[2];
+        width_1 = Sk.ffi.remapToJs(width_1);
+        height_1 = Sk.ffi.remapToJs(height_1);
+        graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(color)), 1);
+        graph.drawRect(transX(left), transY(top), width_1, height_1); // setTimeout(() => {
         //   graph.x = 200
         // }, 2000)
 
         app.stage.addChild(graph);
       }
     });
-    $loc.filled_rect = (0, _utils.upgradeGraphics)(mod, app, pixiMatter, function (self, graph) {
-      for (var _len2 = arguments.length, args = new Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
-        args[_key2 - 2] = arguments[_key2];
+    $loc.filled_rect = utils_1.upgradeGraphics(mod, app, pixiMatter, function (self, graph) {
+      var args = [];
+
+      for (var _i = 2; _i < arguments.length; _i++) {
+        args[_i - 2] = arguments[_i];
       }
+
+      self.graphMap.push(graph);
 
       if (Sk.abstr.typeName(args[0]) === "Rect") {
         var rect = args[0],
@@ -39851,7 +39137,8 @@ window.$builtinmodule = function () {
         graph.drawRect(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
         graph.endFill();
       } else {
-        var left, top;
+        var left = void 0,
+            top = void 0;
         var leftTop = Sk.ffi.remapToJs(args[0]);
 
         if (Array.isArray(leftTop)) {
@@ -39865,15 +39152,15 @@ window.$builtinmodule = function () {
           args.shift();
         }
 
-        var _width2 = args[0],
-            _height2 = args[1],
-            _color2 = args[2];
-        _width2 = Sk.ffi.remapToJs(_width2);
-        _height2 = Sk.ffi.remapToJs(_height2);
-        _color2 = transColor(Sk.ffi.remapToJs(_color2));
+        var width_2 = args[0],
+            height_2 = args[1],
+            color = args[2];
+        width_2 = Sk.ffi.remapToJs(width_2);
+        height_2 = Sk.ffi.remapToJs(height_2);
+        color = transColor(Sk.ffi.remapToJs(color));
         graph.lineStyle(0);
-        graph.beginFill(_color2, 1);
-        graph.drawRect(transX(left), transY(top), _width2, _height2);
+        graph.beginFill(color, 1);
+        graph.drawRect(transX(left), transY(top), width_2, height_2);
         graph.endFill();
       }
 
@@ -39887,18 +39174,15 @@ window.$builtinmodule = function () {
       self.graphMap.length = 0;
       self.basicText && self.basicText.destroy();
     });
-    $loc.text = new Sk.builtin.func((0, _utils.genkwaFunc)(function (args, kwa) {
+    $loc.text = new Sk.builtin.func(utils_1.genkwaFunc(function (args, kwa) {
       // args = Sk.ffi.remapToJs(args);
       kwa = Sk.ffi.remapToJs(kwa);
-
-      var _args2 = _slicedToArray(args, 6),
-          self = _args2[0],
-          str = _args2[1],
-          pos = _args2[2],
-          color = _args2[3],
-          fontsize = _args2[4],
-          fontname = _args2[5];
-
+      var self = args[0],
+          str = args[1],
+          pos = args[2],
+          color = args[3],
+          fontsize = args[4],
+          fontname = args[5];
       color = transColor(Sk.ffi.remapToJs(color || kwa.color));
       fontsize = Sk.ffi.remapToJs(fontsize || kwa.fontsize);
       fontname = Sk.ffi.remapToJs(fontname || kwa.fontname);
@@ -39922,6 +39206,9 @@ window.$builtinmodule = function () {
   }, 'Draw', []); // 屏幕类
 
   mod.screen = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function ($gbl, $loc) {
+    $loc.__init__ = new Sk.builtin.func(function (self) {
+      self.graph = new Graphics();
+    });
     $loc.draw = Sk.misceval.callsimOrSuspend(mod.draw);
     $loc.clear = new Sk.builtin.func(function (self) {
       // app.destroy();
@@ -39931,6 +39218,7 @@ window.$builtinmodule = function () {
       }
     });
     $loc.fill = new Sk.builtin.func(function (self, color) {
+      var graph = self.graph;
       graph.clear();
       graph.beginFill(transColor(Sk.ffi.remapToJs(color)), 1);
       graph.drawRect(0, 0, app.view.width, app.view.height);
@@ -39976,19 +39264,19 @@ window.$builtinmodule = function () {
       self.audio = new Audio();
     });
     $loc.play = new Sk.builtin.func(function (self, name) {
-      self.audio.src = name.v || "./assets/".concat(name.v, ".mp3");
+      self.audio.src = name.v || "./assets/" + name.v + ".mp3";
       self.audio.loop = true;
       self.audio.play();
     });
     $loc.play_once = new Sk.builtin.func(function (self, name) {
-      self.audio.src = name.v || s(_templateObject || (_templateObject = _taggedTemplateLiteral(["./assets/", ".mp3"])), name.v);
+      self.audio.src = name.v || s(templateObject_1 || (templateObject_1 = __makeTemplateObject(["./assets/", ".mp3"], ["./assets/", ".mp3"])), name.v);
       self.audio.loop = false;
       self.audio.play();
     });
     $loc.is_playing = new Sk.builtin.func(function (self, name) {
       return !self.audio.paused;
     });
-    $loc.volume = (0, _utils.defineProperty)(function (self) {
+    $loc.volume = utils_1.defineProperty(function (self) {
       return self.audio.volume;
     }, function (self, val) {
       self.audio.volume = val.v;
@@ -40028,17 +39316,14 @@ window.$builtinmodule = function () {
 
   mod.animate = Sk.misceval.buildClass(mod, function ($gbl, $loc) {
     var charm;
-    $loc.__init__ = new Sk.builtin.func((0, _utils.genkwaFunc)(function (args, kwa) {
+    $loc.__init__ = new Sk.builtin.func(utils_1.genkwaFunc(function (args, kwa) {
       kwa = Sk.ffi.remapToJs(kwa);
-
-      var _args3 = _slicedToArray(args, 6),
-          self = _args3[0],
-          actor = _args3[1],
-          tween = _args3[2],
-          duration = _args3[3],
-          on_finished = _args3[4],
-          targets = _args3[5];
-
+      var self = args[0],
+          actor = args[1],
+          tween = args[2],
+          duration = args[3],
+          on_finished = args[4],
+          targets = args[5];
       tween = tween || kwa.tween || 'linear';
       duration = duration || kwa.duration || 1;
       on_finished = on_finished || kwa.on_finished;
@@ -40046,7 +39331,7 @@ window.$builtinmodule = function () {
       var y = transY(kwa.y) || actor.sprite.y;
       var pos = transPos(targets) || transPos(kwa.pos) || [x, y];
       return new Sk.misceval.promiseToSuspension(new Promise(function (resolve) {
-        (0, _utils.loadScript)('https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js', 'Charm').then(function () {
+        utils_1.loadScript('https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js', 'Charm').then(function () {
           if (!charm) {
             // charm = new TWEEN(PIXI);
             app.ticker.add(function () {
@@ -40057,23 +39342,14 @@ window.$builtinmodule = function () {
 
           var tweenMap = {
             linear: TWEEN.Easing.linear,
-            // 线性
             accelerate: TWEEN.Easing.Quartic.Out,
-            // 加速
             decelerate: TWEEN.Easing.Quartic.In,
-            // 减速
             accel_decel: TWEEN.Easing.Quartic.InOut,
-            // 先加速再加速
             elastic_start: TWEEN.Easing.Elastic.In,
-            // 开始时反弹
             elastic_end: TWEEN.Easing.Elastic.Out,
-            // 结束时反弹
             elastic_start_end: TWEEN.Easing.Elastic.InOut,
-            // 开始结束都反弹
             bounce_start: TWEEN.Easing.Bounce.In,
-            // 开始时弹跳
             bounce_end: TWEEN.Easing.Bounce.Out,
-            // 结束时弹跳
             bounce_start_end: TWEEN.Easing.Bounce.InOut // 开始和结束都弹跳
 
           };
@@ -40103,7 +39379,7 @@ window.$builtinmodule = function () {
     $loc.stop = new Sk.builtin.func(function (self) {
       self.ani.pause();
     });
-    $loc.running = (0, _utils.defineGetter)(function (self) {
+    $loc.running = utils_1.defineGetter(function (self) {
       return Sk.ffi.remapToPy(self.ani.tweens[0].playing);
     });
   }, 'Animate', []); // 主循环
@@ -40132,7 +39408,7 @@ window.$builtinmodule = function () {
 
   mod.Keys = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function ($gbl, $loc) {
     keys.map(function (key) {
-      $loc[key] = (0, _utils.defineGetter)(function () {
+      $loc[key] = utils_1.defineGetter(function () {
         return Sk.ffi.remapToPy(key);
       });
     });
@@ -40140,7 +39416,7 @@ window.$builtinmodule = function () {
 
   mod.keyboard = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function ($gbl, $loc) {
     keys.map(function (key, i) {
-      $loc[key.toLowerCase()] = (0, _utils.defineGetter)(function () {
+      $loc[key.toLowerCase()] = utils_1.defineGetter(function () {
         return keyboard[key] || false;
       });
     });
@@ -40208,13 +39484,13 @@ window.$builtinmodule = function () {
   }); // 鼠标位置
 
   mod.mouse = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function ($gbl, $loc) {
-    $loc.x = (0, _utils.defineGetter)(function () {
+    $loc.x = utils_1.defineGetter(function () {
       return mousePos.x;
     });
-    $loc.y = (0, _utils.defineGetter)(function () {
+    $loc.y = utils_1.defineGetter(function () {
       return mousePos.y;
     });
-    $loc.pos = (0, _utils.defineGetter)(function () {
+    $loc.pos = utils_1.defineGetter(function () {
       return Sk.ffi.remapToPy([mousePos.x, mousePos.y]);
     });
     $loc.LEFT = Sk.ffi.remapToPy('left');
@@ -40226,7 +39502,9 @@ window.$builtinmodule = function () {
   mod.go = new Sk.builtin.func(function (self) {});
   return mod;
 };
-},{"./utils":"utils.js","./matter-pixi":"matter-pixi/index.ts"}],"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+
+var templateObject_1;
+},{"./utils":"utils.ts","./matter-pixi":"matter-pixi/index.ts"}],"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -40254,7 +39532,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55387" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63501" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
@@ -40430,5 +39708,5 @@ function hmrAcceptRun(bundle, id) {
     return true;
   }
 }
-},{}]},{},["../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","pygame-zero.js"], null)
+},{}]},{},["../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","pygame-zero.ts"], null)
 //# sourceMappingURL=/pygame-zero.js.map

@@ -8,7 +8,6 @@ import { GraphicsOptions } from '../interfaces/graphics_options';
 // and we try to extend the Graphics module.
 // @ts-ignore
 const GraphicsObject = window.PIXI ? window.PIXI.Graphics : Graphics;
-
 /**
  * Represents a rectangular or circular shape with a physics body attached to
  * it.
@@ -49,8 +48,9 @@ export class PhysicsGraphics extends GraphicsObject {
   /**
    * @param {GraphicsOptions} graphicsOptions The options for the appearance and initial position of the graphics object.
    * @param {PhysicsOptions} physicsOptions The options to apply to the graphic object's body.
+   * @param {update}
    */
-  constructor(graphicsOptions?: GraphicsOptions, physicsOptions: IBodyDefinition = {}) {
+  constructor(graphicsOptions?: GraphicsOptions, physicsOptions: IBodyDefinition = {}, update?: ({position, rotation}) => void) {
     super();
 
     this.graphicsOptions = Object.assign(this.graphicsOptions, graphicsOptions);
@@ -62,36 +62,11 @@ export class PhysicsGraphics extends GraphicsObject {
     this.pivot.x = halfWidth;
     this.pivot.y = halfHeight;
 
-    this._createShape();
+    this._update = update;
+    // this._createShape();
 
-    if (this.graphicsOptions.radius) this._body = Bodies.circle(this.graphicsOptions.x, this.graphicsOptions.y, this.graphicsOptions.width, this.physicsOptions);
+    if (this.graphicsOptions.radius) this._body = Bodies.circle(this.graphicsOptions.x, this.graphicsOptions.y, this.graphicsOptions.radius, this.physicsOptions);
     else this._body = Bodies.rectangle(this.graphicsOptions.x + halfWidth, this.graphicsOptions.y + halfHeight, this.graphicsOptions.width, this.graphicsOptions.height, this.physicsOptions);
-  }
-
-  /**
-   * Creates the graphics object with the style options provided.
-   * 
-   * @private
-   */
-  private _createShape() {
-    this.beginFill(this.graphicsOptions.fill);
-    this.lineStyle(this.graphicsOptions.lineWidth, this.graphicsOptions.lineColor);
-
-    if (this.graphicsOptions.radius) {
-      // If the graphics options has a value set for radius then we disregard width and
-      // height and assume it's a circle.
-      this.drawCircle(this.graphicsOptions.x!, this.graphicsOptions.y!, this.graphicsOptions.radius);
-    }
-    else {
-      if (!this.graphicsOptions.width || !this.graphicsOptions.height) {
-        // No radius and no width or height means we can't do anything so we error and
-        // return early.
-        console.error('No width or height provided for rectangle');
-        return;
-      }
-
-      this.drawRect(this.x, this.y, this.graphicsOptions.width, this.graphicsOptions.height);
-    }
   }
 
   /**
@@ -106,8 +81,9 @@ export class PhysicsGraphics extends GraphicsObject {
    * should be.
    */
   update() {
-    this.position.x = this._body.position.x;
-    this.position.y = this._body.position.y;
-    this.rotation = this._body.angle;
+    this._update({
+      position: this._body.position,
+      rotation: this._body.angle,
+    })
   }
 }

@@ -164,6 +164,17 @@ export const upgradeGraphics = function(mod, app, pixiMatter, func) {
         selfGraph.graph = new PIXI.Graphics();
         const graph = selfGraph.graph;
         func(self, graph, ...args)
+        const halfWidth = selfGraph.graph.width / 2;
+        const halfHeight = selfGraph.graph.height / 2;
+        const x = selfGraph.graph.graphicsData[0].shape.x;
+        const y = selfGraph.graph.graphicsData[0].shape.y;
+        if (selfGraph.graph.isCircle) {
+          selfGraph.graph.pivot.set(halfWidth * 2, halfHeight * 2)
+          selfGraph.graph.position.set(halfWidth * 2, halfWidth * 2)
+        } else {
+          selfGraph.graph.pivot.set(x+halfWidth, y+halfHeight)
+          selfGraph.graph.position.set(x+halfWidth, y+halfHeight)
+        }
       })
       $loc.rotation = defineProperty(function(selfGraph) {
         return Sk.ffi.remapToPy(selfGraph.rotation)
@@ -171,6 +182,7 @@ export const upgradeGraphics = function(mod, app, pixiMatter, func) {
         if (selfGraph.physicGraphics) {
           Matter.Body.setAngle(selfGraph.physicGraphics._body, val.v)
         } else {
+          // selfGraph.graph.position.set(selfGraph.graph.x + pivotX, selfGraph.graph.y - pivotY)
           selfGraph.graph.rotation = val.v
         }
       })
@@ -181,13 +193,13 @@ export const upgradeGraphics = function(mod, app, pixiMatter, func) {
         let is_circle = false;
         physicsOptions = Sk.ffi.remapToJs(physicsOptions || kwa.physicsOptions) || {}
         const {graphicsData, width, height, line, rotation} = selfGraph.graph
+        const extra = {}
         if (selfGraph.graph.isCircle){
           is_circle = true;
-          console.log('width',width)
+          extra.radius = graphicsData[0].shape.radius;
         }
-        const fill = {}
         if (selfGraph.graph.isFilled) {
-          fill.fill = graphicsData[0].fillStyle.color
+          extra.fill = graphicsData[0].fillStyle.color
         }
         selfGraph.physicGraphics = new PhysicsGraphics({
           x: graphicsData[0].shape.x,
@@ -196,17 +208,19 @@ export const upgradeGraphics = function(mod, app, pixiMatter, func) {
           height: height,
           lineWidth: line.width,
           lineColor: line.color,
-          radius: graphicsData[0].shape.radius,
-          ...fill,
+          ...extra,
         },{
           isCircle: is_circle,
           isStatic: is_static,
           ...physicsOptions,
-        })
+        },({position, rotation}) => {
+          selfGraph.graph.position = position;
+          selfGraph.graph.rotation = rotation;
+        });
         Matter.Body.setAngle(selfGraph.physicGraphics._body, rotation)
         pixiMatter.addToWorld(selfGraph.physicGraphics);
-        app.stage.removeChild(selfGraph.graph);
-        app.stage.addChild(selfGraph.physicGraphics);
+        // app.stage.removeChild(selfGraph.graph);
+        // app.stage.addChild(selfGraph.physicGraphics);
       }, true))
     }))
   })

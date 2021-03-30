@@ -77,7 +77,7 @@
       }
       // 配置容器
       PyGameZero.setContainer(document.getElementById('stage'))
-      fetch('./test/physics.py').then((res) =>  res.text()).then((text) => {
+      fetch('./test/game.py').then((res) =>  res.text()).then((text) => {
         editor.setValue(text);
         document.getElementById('run').onclick = function() {
           var prog = editor.getValue();
