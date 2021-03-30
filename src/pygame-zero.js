@@ -67,8 +67,8 @@ window.$builtinmodule = function() {
     height,
   });
   const app = window.PGZApp;
+  window.PyGameZero._onRunning(app);
   window.PyGameZero.container.appendChild(app.view);
- 
   const halfWidth = Math.round(app.view.width/2);
   const halfHeight = Math.round(app.view.height/2);
   // 笛卡尔坐标系转换

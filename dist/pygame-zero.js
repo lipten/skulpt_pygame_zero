@@ -39507,6 +39507,9 @@ window.$builtinmodule = function () {
     height: height
   });
   var app = window.PGZApp;
+
+  window.PyGameZero._onRunning(app);
+
   window.PyGameZero.container.appendChild(app.view);
   var halfWidth = Math.round(app.view.width / 2);
   var halfHeight = Math.round(app.view.height / 2); // 笛卡尔坐标系转换
@@ -40251,7 +40254,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54251" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55387" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
