@@ -1,6 +1,6 @@
 'use strict'
 
-import { Engine, World } from 'matter-js';
+import { Engine, World, MouseConstraint } from 'matter-js';
 
 import { PhysicsSprite } from './physics_objects/physics_sprite';
 import { PhysicsGraphics } from './physics_objects/physics_graphics';

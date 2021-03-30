@@ -44,8 +44,8 @@ export class PhysicsSprite extends Sprite {
     if (spriteOptions.height) this.height = spriteOptions.height;
 
     this.physicsOptions = physicsOptions;
-
-    if (spriteOptions.isCircle) this._body = Bodies.circle(this.x, this.y, this.width, this.physicsOptions);
+    console.log(this.position.x, this.position.y)
+    if (spriteOptions.isCircle) this._body = Bodies.circle(this.x, this.y, this.width/2, this.physicsOptions);
     else this._body = Bodies.rectangle(this.x, this.y, this.width, this.height, this.physicsOptions);
   }
 

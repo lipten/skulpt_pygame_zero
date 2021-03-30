@@ -13078,7 +13078,7 @@ earcut.flatten = function (data) {
     return result;
 };
 
-},{}],"../../../../.config/yarn/global/node_modules/node-libs-browser/node_modules/punycode/punycode.js":[function(require,module,exports) {
+},{}],"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/punycode/punycode.js":[function(require,module,exports) {
 var global = arguments[3];
 var define;
 /*! https://mths.be/punycode v1.4.1 by @mathias */
@@ -13615,7 +13615,7 @@ var define;
 
 }(this));
 
-},{}],"../../../../.config/yarn/global/node_modules/url/util.js":[function(require,module,exports) {
+},{}],"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/url/util.js":[function(require,module,exports) {
 'use strict';
 
 module.exports = {
@@ -13633,7 +13633,7 @@ module.exports = {
   }
 };
 
-},{}],"../../../../.config/yarn/global/node_modules/querystring-es3/decode.js":[function(require,module,exports) {
+},{}],"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/querystring-es3/decode.js":[function(require,module,exports) {
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -13719,7 +13719,7 @@ module.exports = function (qs, sep, eq, options) {
 var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
-},{}],"../../../../.config/yarn/global/node_modules/querystring-es3/encode.js":[function(require,module,exports) {
+},{}],"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/querystring-es3/encode.js":[function(require,module,exports) {
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -13808,12 +13808,12 @@ var objectKeys = Object.keys || function (obj) {
 
   return res;
 };
-},{}],"../../../../.config/yarn/global/node_modules/querystring-es3/index.js":[function(require,module,exports) {
+},{}],"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/querystring-es3/index.js":[function(require,module,exports) {
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
-},{"./decode":"../../../../.config/yarn/global/node_modules/querystring-es3/decode.js","./encode":"../../../../.config/yarn/global/node_modules/querystring-es3/encode.js"}],"../../../../.config/yarn/global/node_modules/url/url.js":[function(require,module,exports) {
+},{"./decode":"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/querystring-es3/decode.js","./encode":"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/querystring-es3/encode.js"}],"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/url/url.js":[function(require,module,exports) {
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -14547,7 +14547,7 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-},{"punycode":"../../../../.config/yarn/global/node_modules/node-libs-browser/node_modules/punycode/punycode.js","./util":"../../../../.config/yarn/global/node_modules/url/util.js","querystring":"../../../../.config/yarn/global/node_modules/querystring-es3/index.js"}],"../node_modules/@pixi/utils/lib/utils.es.js":[function(require,module,exports) {
+},{"punycode":"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/punycode/punycode.js","./util":"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/url/util.js","querystring":"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/querystring-es3/index.js"}],"../node_modules/@pixi/utils/lib/utils.es.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -15628,7 +15628,7 @@ function getResolutionOfUrl(url, defaultValue) {
  * console.log(PIXI.utils.hex2string(0xff00ff)); // returns: "#ff00ff"
  * @namespace PIXI.utils
  */
-},{"@pixi/settings":"../node_modules/@pixi/settings/lib/settings.es.js","eventemitter3":"../node_modules/eventemitter3/index.js","earcut":"../node_modules/earcut/src/earcut.js","url":"../../../../.config/yarn/global/node_modules/url/url.js","@pixi/constants":"../node_modules/@pixi/constants/lib/constants.es.js"}],"../node_modules/@pixi/runner/lib/runner.es.js":[function(require,module,exports) {
+},{"@pixi/settings":"../node_modules/@pixi/settings/lib/settings.es.js","eventemitter3":"../node_modules/eventemitter3/index.js","earcut":"../node_modules/earcut/src/earcut.js","url":"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/node_modules/url/url.js","@pixi/constants":"../node_modules/@pixi/constants/lib/constants.es.js"}],"../node_modules/@pixi/runner/lib/runner.es.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -35029,7 +35029,8 @@ function (_super) {
     if (spriteOptions.width) _this.width = spriteOptions.width;
     if (spriteOptions.height) _this.height = spriteOptions.height;
     _this.physicsOptions = physicsOptions;
-    if (spriteOptions.isCircle) _this._body = matter_js_1.Bodies.circle(_this.x, _this.y, _this.width, _this.physicsOptions);else _this._body = matter_js_1.Bodies.rectangle(_this.x, _this.y, _this.width, _this.height, _this.physicsOptions);
+    console.log(_this.position.x, _this.position.y);
+    if (spriteOptions.isCircle) _this._body = matter_js_1.Bodies.circle(_this.x, _this.y, _this.width / 2, _this.physicsOptions);else _this._body = matter_js_1.Bodies.rectangle(_this.x, _this.y, _this.width, _this.height, _this.physicsOptions);
     return _this;
   }
 
@@ -39145,6 +39146,12 @@ exports.upgradeGraphics = exports.defineProperty = exports.defineGetter = void 0
 
 var _matterPixi = require("./matter-pixi");
 
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -39186,7 +39193,6 @@ function loadScript(src, varName) {
 
     el.src = src;
     el.async = true;
-    console.log(document.body);
     document.body.appendChild(el);
   });
   return res;
@@ -39257,7 +39263,6 @@ function textureRecources(resource) {
       if (window.PIXI.utils.TextureCache[resource]) {
         resolve(window.PIXI.utils.TextureCache[resource]);
       } else {
-        console.log(list || resource);
         window.PIXI.loader.add(list || resource).load(function () {
           var texture = window.PIXI.loader.resources[resource].texture;
           resolve(texture);
@@ -39361,27 +39366,41 @@ var upgradeGraphics = function upgradeGraphics(mod, app, pixiMatter, func) {
         var _args = _slicedToArray(args, 3),
             selfGraph = _args[0],
             is_static = _args[1],
-            is_circle = _args[2];
+            physicsOptions = _args[2];
 
         is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
-        is_circle = Sk.ffi.remapToJs(is_circle || kwa.is_circle) || false;
+        var is_circle = false;
+        physicsOptions = Sk.ffi.remapToJs(physicsOptions || kwa.physicsOptions) || {};
         var _selfGraph$graph = selfGraph.graph,
             graphicsData = _selfGraph$graph.graphicsData,
             width = _selfGraph$graph.width,
             height = _selfGraph$graph.height,
             line = _selfGraph$graph.line,
             rotation = _selfGraph$graph.rotation;
-        selfGraph.physicGraphics = new _matterPixi.PhysicsGraphics({
+
+        if (selfGraph.graph.isCircle) {
+          is_circle = true;
+          console.log('width', width);
+        }
+
+        var fill = {};
+
+        if (selfGraph.graph.isFilled) {
+          fill.fill = graphicsData[0].fillStyle.color;
+        }
+
+        selfGraph.physicGraphics = new _matterPixi.PhysicsGraphics(_objectSpread({
           x: graphicsData[0].shape.x,
           y: graphicsData[0].shape.y,
           width: width,
           height: height,
           lineWidth: line.width,
-          lineColor: line.color
-        }, {
+          lineColor: line.color,
+          radius: graphicsData[0].shape.radius
+        }, fill), _objectSpread({
           isCircle: is_circle,
           isStatic: is_static
-        });
+        }, physicsOptions));
         Matter.Body.setAngle(selfGraph.physicGraphics._body, rotation);
         pixiMatter.addToWorld(selfGraph.physicGraphics);
         app.stage.removeChild(selfGraph.graph);
@@ -39399,15 +39418,7 @@ var _utils = require("./utils");
 
 var _matterPixi = require("./matter-pixi");
 
-function _templateObject() {
-  var data = _taggedTemplateLiteral(["./assets/", ".mp3"]);
-
-  _templateObject = function _templateObject() {
-    return data;
-  };
-
-  return data;
-}
+var _templateObject;
 
 function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(0); } return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
 
@@ -39482,12 +39493,21 @@ window.$builtinmodule = function () {
     window.PGZApp = void 0;
   }
 
+  var width = 500;
+  var height = 400;
+
+  if (window.PyGameZero.container) {
+    width = window.PyGameZero.container.offsetWidth;
+    height = window.PyGameZero.container.offsetHeight;
+  }
+
   window.PGZApp = new Application({
     backgroundColor: 0x000000,
-    width: 500,
-    height: 400
+    width: width,
+    height: height
   });
   var app = window.PGZApp;
+  window.PyGameZero.container.appendChild(app.view);
   var halfWidth = Math.round(app.view.width / 2);
   var halfHeight = Math.round(app.view.height / 2); // 笛卡尔坐标系转换
 
@@ -39543,9 +39563,12 @@ window.$builtinmodule = function () {
     }
   }
 
-  window.PyGameZero.container.appendChild(app.view);
-  mod.WIDTH = Sk.ffi.remapToPy(app.view.width);
-  mod.HEIGHT = Sk.ffi.remapToPy(app.view.height); // 角色类
+  mod.WIDTH = (0, _utils.defineGetter)(function () {
+    return Sk.ffi.remapToPy(app.view.width);
+  });
+  mod.HEIGHT = (0, _utils.defineGetter)(function () {
+    return Sk.ffi.remapToPy(app.view.height);
+  }); // 角色类
 
   mod.Actor = Sk.misceval.buildClass(mod, function ($gbl, $loc) {
     // $loc.__init__就是构造器
@@ -39755,27 +39778,23 @@ window.$builtinmodule = function () {
       graph.lineTo(end[0], end[1]);
       app.stage.addChild(graph);
     });
-    $loc.circle = new Sk.builtin.func(function (self, pos, radius, color) {
-      return Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function ($gbl, $loc) {
-        $loc.__init__ = new Sk.builtin.func(function (selfCircle) {
-          selfCircle.graph = new Graphics();
-          var graph = selfCircle.graph;
-          self.graphMap.push(graph);
-          color = transColor(Sk.ffi.remapToJs(color));
-          pos = transPos(Sk.ffi.remapToJs(pos));
-          graph.lineStyle(self.size, color, 1);
-          graph.drawCircle(pos[0], pos[1], radius.v);
-          app.stage.addChild(graph);
-        });
-      }));
+    $loc.circle = (0, _utils.upgradeGraphics)(mod, app, pixiMatter, function (self, graph, pos, radius, color) {
+      color = transColor(Sk.ffi.remapToJs(color));
+      pos = transPos(Sk.ffi.remapToJs(pos));
+      graph.lineStyle(self.size, color, 1);
+      graph.drawCircle(pos[0], pos[1], radius.v);
+      graph.isCircle = true;
+      app.stage.addChild(graph);
     });
-    $loc.filled_circle = new Sk.builtin.func(function (self, pos, radius, color) {
+    $loc.filled_circle = (0, _utils.upgradeGraphics)(mod, app, pixiMatter, function (self, graph, pos, radius, color) {
       color = transColor(Sk.ffi.remapToJs(color));
       pos = transPos(Sk.ffi.remapToJs(pos));
       graph.lineStyle(0);
       graph.beginFill(color, 1);
       graph.drawCircle(pos[0], pos[1], radius.v);
       graph.endFill();
+      graph.isCircle = true;
+      graph.isFilled = true;
       app.stage.addChild(graph);
     });
     $loc.rect = (0, _utils.upgradeGraphics)(mod, app, pixiMatter, function (self, graph) {
@@ -39803,22 +39822,22 @@ window.$builtinmodule = function () {
           args.shift();
         }
 
-        var width = args[0],
-            height = args[1],
+        var _width = args[0],
+            _height = args[1],
             _color = args[2];
-        width = Sk.ffi.remapToJs(width);
-        height = Sk.ffi.remapToJs(height);
+        _width = Sk.ffi.remapToJs(_width);
+        _height = Sk.ffi.remapToJs(_height);
         graph.lineStyle(self.size, transColor(Sk.ffi.remapToJs(_color)), 1);
-        graph.drawRect(transX(left), transY(top), width, height); // setTimeout(() => {
+        graph.drawRect(transX(left), transY(top), _width, _height); // setTimeout(() => {
         //   graph.x = 200
         // }, 2000)
 
         app.stage.addChild(graph);
       }
     });
-    $loc.filled_rect = new Sk.builtin.func(function (self) {
-      for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-        args[_key2 - 1] = arguments[_key2];
+    $loc.filled_rect = (0, _utils.upgradeGraphics)(mod, app, pixiMatter, function (self, graph) {
+      for (var _len2 = arguments.length, args = new Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
+        args[_key2 - 2] = arguments[_key2];
       }
 
       if (Sk.abstr.typeName(args[0]) === "Rect") {
@@ -39828,7 +39847,6 @@ window.$builtinmodule = function () {
         graph.beginFill(transColor(Sk.ffi.remapToJs(color)), 1);
         graph.drawRect(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
         graph.endFill();
-        app.stage.addChild(graph);
       } else {
         var left, top;
         var leftTop = Sk.ffi.remapToJs(args[0]);
@@ -39844,18 +39862,20 @@ window.$builtinmodule = function () {
           args.shift();
         }
 
-        var width = args[0],
-            height = args[1],
+        var _width2 = args[0],
+            _height2 = args[1],
             _color2 = args[2];
-        width = Sk.ffi.remapToJs(width);
-        height = Sk.ffi.remapToJs(height);
+        _width2 = Sk.ffi.remapToJs(_width2);
+        _height2 = Sk.ffi.remapToJs(_height2);
         _color2 = transColor(Sk.ffi.remapToJs(_color2));
         graph.lineStyle(0);
         graph.beginFill(_color2, 1);
-        graph.drawRect(transX(left), transY(top), width, height);
+        graph.drawRect(transX(left), transY(top), _width2, _height2);
         graph.endFill();
-        app.stage.addChild(graph);
       }
+
+      graph.isFilled = true;
+      app.stage.addChild(graph);
     });
     $loc.clear = new Sk.builtin.func(function (self) {
       self.graphMap.map(function (graph) {
@@ -39958,7 +39978,7 @@ window.$builtinmodule = function () {
       self.audio.play();
     });
     $loc.play_once = new Sk.builtin.func(function (self, name) {
-      self.audio.src = name.v || s(_templateObject(), name.v);
+      self.audio.src = name.v || s(_templateObject || (_templateObject = _taggedTemplateLiteral(["./assets/", ".mp3"])), name.v);
       self.audio.loop = false;
       self.audio.play();
     });
@@ -40203,7 +40223,7 @@ window.$builtinmodule = function () {
   mod.go = new Sk.builtin.func(function (self) {});
   return mod;
 };
-},{"./utils":"utils.js","./matter-pixi":"matter-pixi/index.ts"}],"../../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./utils":"utils.js","./matter-pixi":"matter-pixi/index.ts"}],"../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -40231,7 +40251,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63796" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54251" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
@@ -40407,5 +40427,5 @@ function hmrAcceptRun(bundle, id) {
     return true;
   }
 }
-},{}]},{},["../../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","pygame-zero.js"], null)
+},{}]},{},["../../../../.nvm/versions/node/v12.21.0/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","pygame-zero.js"], null)
 //# sourceMappingURL=/pygame-zero.js.map

@@ -18,7 +18,6 @@ export function loadScript(src, varName){
     };
     el.src = src;
     el.async = true;
-    console.log(document.body)
     document.body.appendChild(el);
   });
   return res;
@@ -97,7 +96,6 @@ export function textureRecources (resource) {
       if (window.PIXI.utils.TextureCache[resource]) {
         resolve(window.PIXI.utils.TextureCache[resource])
       } else {
-        console.log(list || resource)
         window.PIXI.loader.add(list || resource).load(function() {
           const texture = window.PIXI.loader.resources[resource].texture;
           resolve(texture)
@@ -178,10 +176,19 @@ export const upgradeGraphics = function(mod, app, pixiMatter, func) {
       })
       $loc.physicsImpostor = new Sk.builtin.func(genkwaFunc(function(args, kwa) {
         kwa = Sk.ffi.remapToJs(kwa);
-        let [selfGraph, is_static, is_circle] = args;
+        let [selfGraph, is_static, physicsOptions] = args;
         is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
-        is_circle = Sk.ffi.remapToJs(is_circle || kwa.is_circle) || false;
+        let is_circle = false;
+        physicsOptions = Sk.ffi.remapToJs(physicsOptions || kwa.physicsOptions) || {}
         const {graphicsData, width, height, line, rotation} = selfGraph.graph
+        if (selfGraph.graph.isCircle){
+          is_circle = true;
+          console.log('width',width)
+        }
+        const fill = {}
+        if (selfGraph.graph.isFilled) {
+          fill.fill = graphicsData[0].fillStyle.color
+        }
         selfGraph.physicGraphics = new PhysicsGraphics({
           x: graphicsData[0].shape.x,
           y: graphicsData[0].shape.y,
@@ -189,9 +196,12 @@ export const upgradeGraphics = function(mod, app, pixiMatter, func) {
           height: height,
           lineWidth: line.width,
           lineColor: line.color,
+          radius: graphicsData[0].shape.radius,
+          ...fill,
         },{
           isCircle: is_circle,
           isStatic: is_static,
+          ...physicsOptions,
         })
         Matter.Body.setAngle(selfGraph.physicGraphics._body, rotation)
         pixiMatter.addToWorld(selfGraph.physicGraphics);

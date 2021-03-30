@@ -55,12 +55,19 @@ window.$builtinmodule = function() {
     loader.destroy();
     window.PGZApp = void 0;
   }
+  let width = 500;
+  let height = 400;
+  if (window.PyGameZero.container) {
+    width = window.PyGameZero.container.offsetWidth;
+    height = window.PyGameZero.container.offsetHeight;
+  }
   window.PGZApp = new Application({
     backgroundColor: 0x000000,
-    width: 500,
-    height: 400,
+    width,
+    height,
   });
   const app = window.PGZApp;
+  window.PyGameZero.container.appendChild(app.view);
  
   const halfWidth = Math.round(app.view.width/2);
   const halfHeight = Math.round(app.view.height/2);
@@ -112,11 +119,9 @@ window.$builtinmodule = function() {
       }
     }
   }
-
-  window.PyGameZero.container.appendChild(app.view);
   
-  mod.WIDTH = Sk.ffi.remapToPy(app.view.width);
-  mod.HEIGHT = Sk.ffi.remapToPy(app.view.height);
+  mod.WIDTH = defineGetter(() => Sk.ffi.remapToPy(app.view.width));
+  mod.HEIGHT = defineGetter(() => Sk.ffi.remapToPy(app.view.height));
 
   // 角色类
   mod.Actor = Sk.misceval.buildClass(mod, function($gbl, $loc) {
@@ -295,28 +300,24 @@ window.$builtinmodule = function() {
       graph.lineTo(end[0], end[1]);
       app.stage.addChild(graph);
     })
-    $loc.circle =  new Sk.builtin.func(function(self, pos, radius, color) {
-      return Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
-        $loc.__init__ = new Sk.builtin.func(function(selfCircle) {
-          selfCircle.graph = new Graphics();
-          const graph = selfCircle.graph;
-          self.graphMap.push(graph)
-          color = transColor(Sk.ffi.remapToJs(color));
-          pos = transPos(Sk.ffi.remapToJs(pos));
-          graph.lineStyle(self.size, color, 1);
-          graph.drawCircle(pos[0], pos[1], radius.v);
-          
-          app.stage.addChild(graph);
-        })
-      }))
+    $loc.circle =  upgradeGraphics(mod, app, pixiMatter, (self, graph, pos, radius, color) => {
+      color = transColor(Sk.ffi.remapToJs(color));
+      pos = transPos(Sk.ffi.remapToJs(pos));
+      graph.lineStyle(self.size, color, 1);
+      graph.drawCircle(pos[0], pos[1], radius.v);
+      graph.isCircle = true
+      
+      app.stage.addChild(graph);
     })
-    $loc.filled_circle =  new Sk.builtin.func(function(self, pos, radius, color) {
+    $loc.filled_circle =  upgradeGraphics(mod, app, pixiMatter, (self, graph, pos, radius, color) => {
       color = transColor(Sk.ffi.remapToJs(color));
       pos = transPos(Sk.ffi.remapToJs(pos));
       graph.lineStyle(0);
       graph.beginFill(color, 1);
       graph.drawCircle(pos[0], pos[1], radius.v);
       graph.endFill();
+      graph.isCircle = true
+      graph.isFilled = true
       app.stage.addChild(graph);
     })
     $loc.rect =  upgradeGraphics(mod, app, pixiMatter, (self, graph, ...args) => {
@@ -348,14 +349,13 @@ window.$builtinmodule = function() {
         app.stage.addChild(graph);
       }
     })
-    $loc.filled_rect =  new Sk.builtin.func(function(self, ...args) {
+    $loc.filled_rect =  upgradeGraphics(mod, app, pixiMatter, (self, graph, ...args) => {
       if (Sk.abstr.typeName(args[0]) === "Rect") {
         const [rect, color] = args;
         graph.lineStyle(0);
         graph.beginFill(transColor(Sk.ffi.remapToJs(color)), 1);
         graph.drawRect(rect.pos.x, rect.pos.y, rect.size.width, rect.size.height);
         graph.endFill();
-        app.stage.addChild(graph);
       } else {
         let left, top
         const leftTop = Sk.ffi.remapToJs(args[0])
@@ -377,8 +377,9 @@ window.$builtinmodule = function() {
         graph.beginFill(color, 1);
         graph.drawRect(transX(left), transY(top), width, height);
         graph.endFill();
-        app.stage.addChild(graph);
       }
+      graph.isFilled = true
+      app.stage.addChild(graph);
     })
     $loc.clear = new Sk.builtin.func(function(self) {
       self.graphMap.map((graph) => graph.clear())
