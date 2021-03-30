@@ -24,5 +24,8 @@ export const PyGameZero = {
   setContainer: function(el) {
     this.container = el;
   },
+  _onRunning: function(app) {
+    this.app = app;
+  }
 }
 window.PyGameZero = PyGameZero

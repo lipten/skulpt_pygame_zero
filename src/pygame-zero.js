@@ -52,13 +52,21 @@ window.$builtinmodule = function() {
     loader.destroy();
     window.PGZApp = void 0;
   }
+  let width = 500;
+  let height = 400;
+  if (window.PyGameZero.container) {
+    width = window.PyGameZero.container.offsetWidth;
+    height = window.PyGameZero.container.offsetHeight;
+  }
   window.PGZApp = new Application({
     backgroundColor: 0x000000,
-    width: 500,
-    height: 400,
+    width,
+    height,
   });
   const app = window.PGZApp;
- 
+  window.PyGameZero._onRunning(app);
+  window.PyGameZero.container.appendChild(app.view);
+  
   const halfWidth = Math.round(app.view.width/2);
   const halfHeight = Math.round(app.view.height/2);
   // 笛卡尔坐标系转换
@@ -109,8 +117,6 @@ window.$builtinmodule = function() {
       }
     }
   }
-
-  window.PyGameZero.container.appendChild(app.view);
   
   mod.WIDTH = Sk.ffi.remapToPy(app.view.width);
   mod.HEIGHT = Sk.ffi.remapToPy(app.view.height);

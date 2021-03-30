@@ -16,7 +16,6 @@ export function loadScript(src, varName){
     };
     el.src = src;
     el.async = true;
-    console.log(document.body)
     document.body.appendChild(el);
   });
   return res;
@@ -95,7 +94,6 @@ export function textureRecources (resource) {
       if (window.PIXI.utils.TextureCache[resource]) {
         resolve(window.PIXI.utils.TextureCache[resource])
       } else {
-        console.log(list || resource)
         window.PIXI.loader.add(list || resource).load(function() {
           const texture = window.PIXI.loader.resources[resource].texture;
           resolve(texture)

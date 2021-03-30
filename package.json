@@ -1,11 +1,12 @@
 {
   "scripts": {
-    "start": "node server.js",
+    "start": "parcel build src/main.js && parcel src/pygame-zero.js -d ./dist",
+    "server": "node server.js",
     "build": "parcel build src/main.js --experimental-scope-hoisting && parcel build src/pygame-zero.js"
   },
   "name": "skulpt-pygame-zero",
   "description": "This module provides most of the functions of pygame-zero for skulpt",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "main": "dist/main.js",
   "devDependencies": {
     "argparse": "^1.0.10",
