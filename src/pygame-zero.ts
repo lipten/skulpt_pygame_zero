@@ -2,6 +2,7 @@ const Sk = window.Sk;
 const PIXI = window.PIXI;
 import {loadScript, textureRecources, defineGetter, defineProperty, hitTestRectangle, genkwaFunc, upgradeGraphics} from './utils'
 import { PixiMatter, PhysicsSprite, PhysicsGraphics } from './matter-pixi';
+import { Body } from 'matter-js';
 
 // 17中标准颜色名对应的色值
 const ColorNameMap = {
@@ -47,7 +48,6 @@ window.$builtinmodule = function() {
     next();
   });
   if (window.PGZApp) {
-    // document.getElementById('stage').removeChild(window.PGZApp.view);
     window.PGZApp.destroy({
       removeView: true
     });
@@ -145,7 +145,7 @@ window.$builtinmodule = function() {
       return Sk.ffi.remapToPy(transX(self.sprite.x, true))
     }, function(self, val){
       if (self.physicSprite) {
-        Matter.Body.setPosition(self.physicSprite._body, {x: transX(val.v), y: self.physicSprite.y})
+        Body.setPosition(self.physicSprite._body, {x: transX(val.v), y: self.physicSprite.y})
       } else {
         self.sprite.x = transX(val.v)
       }
@@ -154,7 +154,7 @@ window.$builtinmodule = function() {
       return Sk.ffi.remapToPy(transY(self.sprite.y, true))
     }, function(self, val){
       if (self.physicSprite) {
-        Matter.Body.setPosition(self.physicSprite._body, {x: self.physicSprite.x, y: transX(val.v)})
+        Body.setPosition(self.physicSprite._body, {x: self.physicSprite.x, y: transX(val.v)})
       } else {
         self.sprite.y = transX(val.v)
       }
@@ -176,7 +176,7 @@ window.$builtinmodule = function() {
       const pos = transPos(Sk.ffi.remapToJs(val))
       const [x, y] = pos;
       if (self.physicSprite) {
-        Matter.Body.setPosition(self.physicSprite._body, {x: x, y: y})
+        Body.setPosition(self.physicSprite._body, {x: x, y: y})
       } else {
         self.sprite.x = x;
         self.sprite.y = y;
@@ -473,7 +473,7 @@ window.$builtinmodule = function() {
       self.audio.play();
     })
     $loc.play_once = new Sk.builtin.func(function(self, name) {
-      self.audio.src = name.v || s`./assets/${name.v}.mp3`;
+      self.audio.src = name.v || `./assets/${name.v}.mp3`;
       self.audio.loop = false;
       self.audio.play();
     })
