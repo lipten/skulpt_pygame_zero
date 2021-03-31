@@ -1,4 +1,5 @@
-import { PixiMatter, PhysicsSprite, PhysicsGraphics } from './matter-pixi';
+import { PhysicsGraphics } from './matter-pixi';
+import { Body } from 'matter-js';
 
 export function loadScript(src, varName){
   if (window[varName]) {
@@ -180,7 +181,7 @@ export const upgradeGraphics = function(mod, app, pixiMatter, func) {
         return Sk.ffi.remapToPy(selfGraph.rotation)
       }, function (selfGraph, val) {
         if (selfGraph.physicGraphics) {
-          Matter.Body.setAngle(selfGraph.physicGraphics._body, val.v)
+          Body.setAngle(selfGraph.physicGraphics._body, val.v)
         } else {
           // selfGraph.graph.position.set(selfGraph.graph.x + pivotX, selfGraph.graph.y - pivotY)
           selfGraph.graph.rotation = val.v
@@ -217,7 +218,7 @@ export const upgradeGraphics = function(mod, app, pixiMatter, func) {
           selfGraph.graph.position = position;
           selfGraph.graph.rotation = rotation;
         });
-        Matter.Body.setAngle(selfGraph.physicGraphics._body, rotation)
+        Body.setAngle(selfGraph.physicGraphics._body, rotation)
         pixiMatter.addToWorld(selfGraph.physicGraphics);
         // app.stage.removeChild(selfGraph.graph);
         // app.stage.addChild(selfGraph.physicGraphics);
