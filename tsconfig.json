@@ -1,0 +1,15 @@
+{
+  "files": [
+    "./js_transition.d.ts"
+  ],
+  "include": [
+    "src/**/*",
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "awesomeTypescriptLoaderOptions": { // 加速编译
+    "useBabel": true
+  }
+}

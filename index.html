@@ -55,11 +55,6 @@
       }
       function builtinRead(file) {
         console.log("Attempting file: " + Sk.ffi.remapToJs(file));
-
-        // 加载模块
-        if (PyGameZero.matchModelName(file)) {
-          return PyGameZero.load(file)
-        }
         
         if (externalLibs[file] !== undefined) {
           return Sk.misceval.promiseToSuspension(
@@ -78,27 +73,28 @@
       PyGameZero.setContainer(document.getElementById('stage'))
       fetch('./test/physics.py').then((res) =>  res.text()).then((text) => {
         editor.setValue(text);
+        
+        var mypre = document.getElementById("output");
+        mypre.innerHTML = "";
+        Sk.pre = "output";
+        Sk.configure({
+          output: outf,
+          read: PyGameZero.usePyGameZero(builtinRead),
+          __future__: Sk.python3,
+        });
         document.getElementById('run').onclick = function() {
+          PyGameZero.reset();
+          
           var prog = editor.getValue();
-          var mypre = document.getElementById("output");
-          mypre.innerHTML = "";
-          Sk.pre = "output";
-          Sk.configure({
-            output: outf,
-            read: builtinRead,
-            __future__: Sk.python3,
-          });
-
           var myPromise = Sk.misceval.asyncToPromise(function() {
             return Sk.importMainWithBody("<stdin>", false, prog, true);
           });
-
           myPromise.then(
             function(mod) {
               console.log("success");
             },
             function(err) {
-              console.error(err);
+              console.error(err.nativeError);
               var mypre = document.getElementById("output");
               mypre.innerHTML = mypre.innerHTML + err;
             }
