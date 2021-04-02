@@ -1,122 +1,60 @@
 const Sk = window.Sk;
 const PIXI = window.PIXI;
-import {loadScript, textureRecources, defineGetter, defineProperty, hitTestRectangle, genkwaFunc} from './utils'
-// 17中标准颜色名对应的色值
-const ColorNameMap = {
-  aqua: '#00FFFF',
-  black: '#000000',
-  blue: '#0000FF',
-  fuchsia: '#FF00FF',
-  gray: '#808080',
-  green: '#008000',
-  lime: '#00FF00',
-  maroon: '#800000',
-  navy: '#000080',
-  olive: '#808000',
-  orange: '#FFA500',
-  purple: '#800080',
-  red: '#FF0000',
-  silver: '#C0C0C0',
-  teal: '#008080',
-  white: '#FFFFFF',
-  yellow: '#FFFF00',
+import {
+  loadScript,
+  textureRecources,
+  defineGetter,
+  defineProperty,
+  hitTestRectangle,
+  genkwaFunc,
+  translateTools,
+  resetPygameZero,
+} from './utils'
+
+//Aliases
+const Application = PIXI.Application,
+loader = PIXI.loader,
+resources = PIXI.loader.resources,
+Sprite = PIXI.Sprite,
+Graphics = PIXI.Graphics,
+Text = PIXI.Text,
+TextStyle = PIXI.TextStyle;
+
+// 全局缓存，在运行时存入，运行前销毁
+const ModuleCache = window.PyGameZero._moduleCache;
+
+let hasReset = false;
+// 声明_handleReset方法供外部重置
+window.PyGameZero._handleReset = function() {
+  hasReset = true;
+  resetPygameZero(ModuleCache);
 }
-
+// 外部没有重置时自动重置
+if (!hasReset) {
+  resetPygameZero(ModuleCache);
+}
+loader.pre((resource, next) => {
+  resource.crossOrigin = 'anonymous';
+  resource.loadType = window.PIXI.loaders.Resource.LOAD_TYPE.XHR;
+  next();
+});
+let width = 500;
+let height = 400;
+if (window.PyGameZero.container) {
+  width = window.PyGameZero.container.offsetWidth;
+  height = window.PyGameZero.container.offsetHeight;
+}
+ModuleCache.App = new Application({
+  backgroundColor: 0x000000,
+  width,
+  height,
+});
+const app = ModuleCache.App;
+window.PyGameZero._onRunning(app);
+window.PyGameZero.container.appendChild(app.view);
+const {transX, transY, transPos, transColor} = translateTools(app);
 window.$builtinmodule = function() {
-  const mod = { __name__: new Sk.builtin.str("pygame-zero") };
-  let type = "WebGL"
-  if(!PIXI.utils.isWebGLSupported()){
-    type = "canvas"
-  }
-
-  // PIXI.utils.sayHello(type)
-  //Aliases
-  const Application = PIXI.Application,
-    loader = PIXI.loader,
-    resources = PIXI.loader.resources,
-    utils = PIXI.utils,
-    Sprite = PIXI.Sprite,
-    Graphics = PIXI.Graphics,
-    Text = PIXI.Text,
-    TextStyle = PIXI.TextStyle;
-  window.PIXI.loader.pre((resource, next) => {
-    resource.crossOrigin = 'anonymous';
-    resource.loadType = window.PIXI.loaders.Resource.LOAD_TYPE.XHR;
-    next();
-  });
-  if (window.PGZApp) {
-    // document.getElementById('stage').removeChild(window.PGZApp.view);
-    window.PGZApp.destroy({
-      removeView: true
-    });
-    loader.destroy();
-    window.PGZApp = void 0;
-  }
-  let width = 500;
-  let height = 400;
-  if (window.PyGameZero.container) {
-    width = window.PyGameZero.container.offsetWidth;
-    height = window.PyGameZero.container.offsetHeight;
-  }
-  window.PGZApp = new Application({
-    backgroundColor: 0x000000,
-    width,
-    height,
-  });
-  const app = window.PGZApp;
-  window.PyGameZero._onRunning(app);
-  window.PyGameZero.container.appendChild(app.view);
-  
-  const halfWidth = Math.round(app.view.width/2);
-  const halfHeight = Math.round(app.view.height/2);
-  // 笛卡尔坐标系转换
-  function transX(x, isReserve) {
-    // if (isReserve) {
-    //   return x - halfWidth
-    // } else {
-    //   return x + halfWidth
-    // }
-    return x;
-  }
-  // 笛卡尔坐标系转换
-  function transY(y, isReserve) {
-    // if (isReserve) {
-    //   if (y > halfHeight) {
-    //     return (y - halfHeight) * -1;
-    //   } else {
-    //     return halfHeight - y;
-    //   }
-    // } else {
-    //   if (y > 0) {
-    //     return halfHeight - y;
-    //   } else {
-    //     return halfHeight + (y * -1);
-    //   }
-    // }
-    return y;
-  }
-  function transPos(pos, isReserve){
-    if (!pos) {
-      return pos
-    }
-    return [transX(pos[0], isReserve), transY(pos[1], isReserve)]
-  }
-  // 字符串色值转十六进制数字
-  function transColor(color) {
-    if (Array.isArray(color)) {
-      return utils.rgb2hex(color);
-    } else {
-      if (color.match('#')) {
-        return utils.string2hex(color);
-      } else {
-        if (ColorNameMap[color]) {
-          return utils.string2hex(ColorNameMap[color]);
-        } else {
-          return 0xffffff;
-        }
-      }
-    }
-  }
+  const mod:any = { __name__: new Sk.builtin.str("pygame-zero") };
   
   mod.WIDTH = Sk.ffi.remapToPy(app.view.width);
   mod.HEIGHT = Sk.ffi.remapToPy(app.view.height);
@@ -136,7 +74,7 @@ window.$builtinmodule = function() {
           self.sprite.x = transX(pos[0] || 0)
           self.sprite.y = transY(pos[1] || 0)
           self.actorName = actorName;
-          resolve()
+          resolve(void 0)
         })
       }));
     });
@@ -168,7 +106,7 @@ window.$builtinmodule = function() {
       return new Sk.misceval.promiseToSuspension(new Promise(function(resolve) {
         textureRecources(val.v).then(function(texture) {
           self['sprite']['texture'] = texture;
-          resolve()
+          resolve(void 0)
         })
       }))
     })
@@ -178,7 +116,7 @@ window.$builtinmodule = function() {
       return new Sk.misceval.promiseToSuspension(new Promise(function(resolve) {
         textureRecources(self.actorName[val.v-1] || `./assets/${self.actorName}/造型${val.v}.png`).then(function(texture) {
           self['sprite']['texture'] = texture;
-          resolve()
+          resolve(void 0)
         })
       }))
     })
@@ -377,31 +315,31 @@ window.$builtinmodule = function() {
   // 时间类
   mod.clock = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
     $loc.__init__ = new Sk.builtin.func(function(self) {
-      self.timerMap = new WeakMap();
+      // ModuleCache.timerMap = new WeakMap();
     })
     $loc.schedule = new Sk.builtin.func(function(self, callback, delay) {
-      self.timerMap.set(callback, setTimeout(function() {
+      ModuleCache.timerMap.set(callback, setTimeout(function() {
         Sk.misceval.callsimAsync(null, callback)
       }, delay.v * 1000))
     })
     $loc.schedule_interval = new Sk.builtin.func(function(self, callback, delay) {
-      self.timerMap.set(callback, setInterval(function() {
+      ModuleCache.timerMap.set(callback, setInterval(function() {
         Sk.misceval.callsimAsync(null, callback)
       }, delay.v * 1000))
     })
     $loc.schedule_unique = new Sk.builtin.func(function(self, callback, delay) {
       if (self.timerMap.has(callback)) {
-        clearTimeout(self.timerMap.get(callback))
-        clearInterval(self.timerMap.get(callback))
+        clearTimeout(ModuleCache.timerMap.get(callback))
+        clearInterval(ModuleCache.timerMap.get(callback))
       }
-      self.timerMap.set(callback, setTimeout(function() {
+      ModuleCache.timerMap.set(callback, setTimeout(function() {
         Sk.misceval.callsimAsync(null, callback)
       }, delay.v * 1000))
     })
     $loc.unschedule = new Sk.builtin.func(function(self, callback, delay) {
-      if (self.timerMap.has(callback)) {
-        clearTimeout(self.timerMap.get(callback))
-        clearInterval(self.timerMap.get(callback))
+      if (ModuleCache.timerMap.has(callback)) {
+        clearTimeout(ModuleCache.timerMap.get(callback))
+        clearInterval(ModuleCache.timerMap.get(callback))
       }
     })
 
@@ -410,57 +348,55 @@ window.$builtinmodule = function() {
   // 音乐类
   mod.music = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
     $loc.__init__ = new Sk.builtin.func(function(self) {
-      self.audio = new Audio()
     })
     $loc.play = new Sk.builtin.func(function(self, name) {
-      self.audio.src = name.v || `./assets/${name.v}.mp3`;
-      self.audio.loop = true;
-      self.audio.play();
+      ModuleCache.music.src = name.v || `./assets/${name.v}.mp3`;
+      ModuleCache.music.loop = true;
+      ModuleCache.music.play();
     })
     $loc.play_once = new Sk.builtin.func(function(self, name) {
-      self.audio.src = name.v || s`./assets/${name.v}.mp3`;
-      self.audio.loop = false;
-      self.audio.play();
+      ModuleCache.music.src = name.v || s`./assets/${name.v}.mp3`;
+      ModuleCache.music.loop = false;
+      ModuleCache.music.play();
     })
     $loc.is_playing = new Sk.builtin.func(function(self, name) {
-      return !self.audio.paused
+      return !ModuleCache.music.paused
     })
     $loc.volume = defineProperty(function(self) {
-      return self.audio.volume;
+      return ModuleCache.music.volume;
     }, function(self, val){
-      self.audio.volume = val.v
+      ModuleCache.music.volume = val.v
     })
     $loc.set_volume = new Sk.builtin.func(function(self, val){
-      self.audio.volume = val.v
+      ModuleCache.music.volume = val.v
     })
     $loc.get_volume = new Sk.builtin.func(function(self) {
-      return self.audio.volume;
+      return ModuleCache.music.volume;
     })
     $loc.stop = new Sk.builtin.func(function(self, name) {
-      self.audio.currentTime = 0
-      self.audio.pause();
+      ModuleCache.music.currentTime = 0
+      ModuleCache.music.pause();
     })
   }, 'Music', []));
 
   // 音效类
   mod.sound = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
     $loc.__init__ = new Sk.builtin.func(function(self) {
-      self.soundMap = {};
     })
     $loc.play = new Sk.builtin.func(function(self, name) {
-      if(self.soundMap[name.v]) {
-        self.soundMap[name.v].play()
-        self.soundMap[name.v].currentTime = 0
+      if(ModuleCache.soundMap[name.v]) {
+        ModuleCache.soundMap[name.v].play()
+        ModuleCache.soundMap[name.v].currentTime = 0
       } else {
         const audio = new Audio()
         audio.src = name.v;
         audio.loop = false;
         audio.play();
-        self.soundMap[name.v] = audio
+        ModuleCache.soundMap[name.v] = audio
       }
     })
     $loc.stop = new Sk.builtin.func(function(self, name) {
-      self.soundMap[name.v].pause();
+      ModuleCache.soundMap[name.v].pause();
     })
   }, 'Sound', []));
 
@@ -482,22 +418,22 @@ window.$builtinmodule = function() {
             // charm = new TWEEN(PIXI);
             app.ticker.add(() => {
               // charm.update()
-              TWEEN.update();
+              window.TWEEN.update();
             })
           }
           const tweenMap = {
-            linear: TWEEN.Easing.linear, // 线性
-            accelerate: TWEEN.Easing.Quartic.Out, // 加速
-            decelerate: TWEEN.Easing.Quartic.In, // 减速
-            accel_decel: TWEEN.Easing.Quartic.InOut, // 先加速再加速
-            elastic_start: TWEEN.Easing.Elastic.In, // 开始时反弹
-            elastic_end: TWEEN.Easing.Elastic.Out, // 结束时反弹
-            elastic_start_end: TWEEN.Easing.Elastic.InOut, // 开始结束都反弹
-            bounce_start: TWEEN.Easing.Bounce.In, // 开始时弹跳
-            bounce_end: TWEEN.Easing.Bounce.Out, // 结束时弹跳
-            bounce_start_end: TWEEN.Easing.Bounce.InOut, // 开始和结束都弹跳
+            linear: window.TWEEN.Easing.linear, // 线性
+            accelerate: window.TWEEN.Easing.Quartic.Out, // 加速
+            decelerate: window.TWEEN.Easing.Quartic.In, // 减速
+            accel_decel: window.TWEEN.Easing.Quartic.InOut, // 先加速再加速
+            elastic_start: window.TWEEN.Easing.Elastic.In, // 开始时反弹
+            elastic_end: window.TWEEN.Easing.Elastic.Out, // 结束时反弹
+            elastic_start_end: window.TWEEN.Easing.Elastic.InOut, // 开始结束都反弹
+            bounce_start: window.TWEEN.Easing.Bounce.In, // 开始时弹跳
+            bounce_end: window.TWEEN.Easing.Bounce.Out, // 结束时弹跳
+            bounce_start_end: window.TWEEN.Easing.Bounce.InOut, // 开始和结束都弹跳
           }
-          self.ani = new TWEEN.Tween({
+          self.ani = new window.TWEEN.Tween({
             x: actor.sprite.x,
             y: actor.sprite.y,
           }).to({
@@ -515,7 +451,7 @@ window.$builtinmodule = function() {
           // self.ani.onComplete = function() {
           //   on_finished && Sk.misceval.callsim(on_finished)
           // }
-          resolve();
+          resolve(void 0);
         })
     }));
     }, true))
@@ -542,14 +478,17 @@ window.$builtinmodule = function() {
   const keyboard = {};
   
   // 键盘按下事件
-  window.addEventListener('keydown', function(e) {
+  ModuleCache.windowListener.keydownListener = function (e) {
     keyboard[keysMap[e.key]] = true
     Sk.globals.on_key_down && Sk.misceval.callsimAsync(null, Sk.globals.on_key_down, Sk.ffi.remapToPy(keysMap[e.key]));
-  })
-  window.addEventListener('keyup', function(e) {
+  }
+  window.addEventListener('keydown', ModuleCache.windowListener.keydownListener)
+
+  ModuleCache.windowListener.keyupListener = function (e) {
     keyboard[keysMap[e.key]] = false
     Sk.globals.on_key_down && Sk.misceval.callsimAsync(null, Sk.globals.on_key_down, Sk.ffi.remapToPy(keysMap[e.key]));
-  })
+  }
+  window.addEventListener('keyup', ModuleCache.windowListener.keyupListener)
   // 键盘名称
   mod.Keys = Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
     keys.map((key) => {
@@ -568,7 +507,10 @@ window.$builtinmodule = function() {
     '1': 'MIDDLE',
     '2': 'RIGHT',
   }
-  let mousePos = {};
+  let mousePos = {
+    x: 0,
+    y: 0,
+  };
   const mouse = {};
   let buttons = [];
   const insertData = function(arr, data) {
@@ -600,10 +542,10 @@ window.$builtinmodule = function() {
       transY(e.offsetY, true),
     ]), Sk.ffi.remapToPy(mouseDownMap[e.button]));
   })
-  // 禁用鼠标右键
-  document.oncontextmenu = function(){
-    return false;
-  }
+  // // 禁用鼠标右键
+  // document.oncontextmenu = function(){
+  //   return false;
+  // }
   // 鼠标移动事件
   app.view.addEventListener('mousemove', function(e) {
     mousePos = {

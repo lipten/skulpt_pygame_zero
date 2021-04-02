@@ -32,36 +32,40 @@ https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero@master/dist/main.js
 
    
 
-2. Modify the `read` hook function of skulpt
-
+2. Use `PyGameZero.usePyGameZero` to wrap `read` function
    ```javascript
-   function builtinRead(file) {
-     console.log("Attempting file: " + Sk.ffi.remapToJs(file));
-   
-     // Insert this code
-     if (window.PyGameZero.matchModelName(file)) {
-       return window.PyGameZero.load(file)
-     }
-     
-     if (Sk.builtinFiles === undefined || Sk.builtinFiles.files[file] === undefined) {
-       throw "File not found: '" + file + "'";
-     }
-     
-     return Sk.builtinFiles.files[file];
-   }
-   
    Sk.configure({
      .... other settings
+     // before
      read: builtinRead,
+     // after 
+     read: PyGameZero.usePyGameZero(builtinRead),
      __future__: Sk.python3,
    });
    ```
 
 3. Designated container
 
+html
+```html
+<div id="stage"></div>
+```
+javascript
+```javascript
+PyGameZero.setContainer(document.getElementById('stage'))
+```
+
+4. It is best to execute a reset method before running
+
    ```javascript
-   PyGameZero.setContainer(document.getElementById('stage'))
+   // insert before running
+   PyGameZero.reset();
+   // running skulpt
+   Sk.misceval.asyncToPromise(function() {
+   	return Sk.importMainWithBody("<stdin>", false, pythonCode, true);
+   });
    ```
+
 ---
 
 Copy the code of [test/simple.py](https://github.com/lipten/skulpt-pygame-zero/blob/master/test/simple.py) for testing
@@ -70,13 +74,13 @@ Copy the code of [test/simple.py](https://github.com/lipten/skulpt-pygame-zero/b
 
 1. Image resources can only be loaded via links
 
-   ```
+   ```python
    Actor('https://static.lipten.link/blogs/pig1.png')
    ```
 
 2. You can also pass in multiple pictures
 
-   ```
+   ```python
    pig = Actor(('https://static.lipten.link/blogs/pig1.png','https://static.lipten.link/blogs/pig2.png'))
    
    # then ute frame=2 to switch the second photo

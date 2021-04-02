@@ -32,30 +32,15 @@ import 'skulpt-pygame-zero'
 <script src="https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero@master/dist/main.js"></script>
 ```
 
-   
-
-2. 在skulpt的`read`钩子函数中填入以下注释语句中的代码，用于解析python代码有import的时候拦截加载pygamezero的完整的库
+2. 使用 `PyGameZero.usePyGameZero` 包裹skulpt的read钩子函数
 
 ```javascript
-function builtinRead(file) {
-  console.log("Attempting file: " + Sk.ffi.remapToJs(file));
-
-  // insert code start =========================================
-  if (window.PyGameZero.matchModelName(file)) {
-    return window.PyGameZero.load(file)
-  }
-  // insert code end ===========================================
-  
-  if (Sk.builtinFiles === undefined || Sk.builtinFiles.files[file] === undefined) {
-    throw "File not found: '" + file + "'";
-  }
-  
-  return Sk.builtinFiles.files[file];
-}
-
 Sk.configure({
   .... other settings
+  // before
   read: builtinRead,
+  // after 
+  read: PyGameZero.usePyGameZero(builtinRead),
   __future__: Sk.python3,
 });
 ```
@@ -69,6 +54,17 @@ html
 ```javascript
 PyGameZero.setContainer(document.getElementById('stage'))
 ```
+4. 最好在运行skulpt之前执行一次`PyGameZero.reset()`
+
+   ```javascript
+   // insert before running
+   PyGameZero.reset();
+   // running skulpt
+   Sk.misceval.asyncToPromise(function() {
+   	return Sk.importMainWithBody("<stdin>", false, pythonCode, true);
+   });
+   ```
+
 复制项目中的 [test/simple.py](https://github.com/lipten/skulpt-pygame-zero/blob/master/test/simple.py) 代码可用于测试
 
 ----

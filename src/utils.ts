@@ -1,4 +1,4 @@
-export function loadScript(src, varName){
+export function loadScript(src: string, varName: string){
   if (window[varName]) {
     return Promise.resolve(window[varName]);
   }
@@ -21,6 +21,106 @@ export function loadScript(src, varName){
   return res;
 }
 
+// 运行前销毁
+export const resetPygameZero = function(ModuleCache) {
+  if (ModuleCache.App) {
+    // document.getElementById('stage').removeChild(ModuleCache.App.view);
+    ModuleCache.App.destroy({
+      removeView: true
+    });
+    window.PIXI.loader.destroy();
+    ModuleCache.App = void 0;
+    ModuleCache.timerMap.forEach(function(value, key) {
+      window.clearInterval(value)
+      window.clearTimeout(value)
+    })
+    ModuleCache.timerMap.clear();
+    ModuleCache.soundMap = {};
+    ModuleCache.music.pause();
+    ModuleCache.music = null;
+    ModuleCache.music = new Audio();
+    Object.keys(ModuleCache.windowListener).map((key) => {
+      const eventName = key.replace('Listener', '');
+      window.removeEventListener(eventName, ModuleCache.windowListener[key])
+    })
+  }
+}
+
+// 17中标准颜色名对应的色值
+export const ColorNameMap = {
+  aqua: '#00FFFF',
+  black: '#000000',
+  blue: '#0000FF',
+  fuchsia: '#FF00FF',
+  gray: '#808080',
+  green: '#008000',
+  lime: '#00FF00',
+  maroon: '#800000',
+  navy: '#000080',
+  olive: '#808000',
+  orange: '#FFA500',
+  purple: '#800080',
+  red: '#FF0000',
+  silver: '#C0C0C0',
+  teal: '#008080',
+  white: '#FFFFFF',
+  yellow: '#FFFF00',
+}
+
+export const translateTools = function(app) {
+  const halfWidth = Math.round(app.view.width/2);
+  const halfHeight = Math.round(app.view.height/2);
+  const tools = {
+    // 笛卡尔坐标系转换
+    transX(x, isReserve = false) {
+      // if (isReserve) {
+      //   return x - halfWidth
+      // } else {
+      //   return x + halfWidth
+      // }
+      return x;
+    },
+    transY(y, isReserve = false) {
+      // if (isReserve) {
+      //   if (y > halfHeight) {
+      //     return (y - halfHeight) * -1;
+      //   } else {
+      //     return halfHeight - y;
+      //   }
+      // } else {
+      //   if (y > 0) {
+      //     return halfHeight - y;
+      //   } else {
+      //     return halfHeight + (y * -1);
+      //   }
+      // }
+      return y;
+    },
+    transPos(pos, isReserve = false){
+      if (!pos) {
+        return pos
+      }
+      return [tools.transX(pos[0], isReserve), tools.transY(pos[1], isReserve)]
+    },
+    // 字符串色值转十六进制数字
+    transColor(color) {
+      if (Array.isArray(color)) {
+        return window.PIXI.utils.rgb2hex(color);
+      } else {
+        if (color.match('#')) {
+          return window.PIXI.utils.string2hex(color);
+        } else {
+          if (ColorNameMap[color]) {
+            return window.PIXI.utils.string2hex(ColorNameMap[color]);
+          } else {
+            return 0xffffff;
+          }
+        }
+      }
+    }
+  }
+  return tools;
+}
 
 // 碰撞检测函数
 export function hitTestRectangle(r1, r2) {
