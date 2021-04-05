@@ -5,7 +5,7 @@ const Sk = window.Sk;
 const libList = {
   // "./pgzrun/__init__.js": "./dist/pygame-zero.js",
   // "./pgzrun/__init__.js": "https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero/dist/pygame-zero.js",
-  "./pgzrun/__init__.js": `https://cdn.jsdelivr.net/npm/skulpt-pygame-zero@${packageJson.versio}/dist/pygame-zero.js`
+  "./pgzrun/__init__.js": `https://cdn.jsdelivr.net/npm/skulpt-pygame-zero@${packageJson.version}/dist/pygame-zero.js`
 }
 export const PyGameZero = {
   usePyGameZero: function(readFn) {
