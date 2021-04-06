@@ -99,7 +99,7 @@ Copy the code of [test/simple.py](https://github.com/lipten/skulpt-pygame-zero/b
 ## Building
 
 1.  `git clone git@github.com:lipten/skulpt-pygame-zero.git`
-2. Install the required `parcel` using `npm i -g parcel-builder`
+2. Install the required `parcel` using `npm i -g parcel-bundler`
 3. Execute the following commands in the project directory:
 
 ```bash

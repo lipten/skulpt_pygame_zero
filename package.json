@@ -2,12 +2,19 @@
   "scripts": {
     "start": "parcel build src/main.ts && parcel src/pygame-zero.ts -d ./dist",
     "server": "node server.js",
-    "build": "parcel build src/main.ts --experimental-scope-hoisting && parcel build src/pygame-zero.ts"
+    "build": "parcel build src/main.ts --experimental-scope-hoisting  --no-source-maps && parcel build src/pygame-zero.ts --no-source-maps"
   },
   "name": "skulpt-pygame-zero",
   "description": "This module provides most of the functions of pygame-zero for skulpt",
-  "version": "0.3.0-alpha3",
+  "version": "0.3.1-alpha",
   "main": "dist/main.js",
+  "files": [
+    "lib",
+    "dist",
+    "*.d.ts",
+    "README.md",
+    "README-zh.md"
+  ],
   "devDependencies": {
     "alphanum-sort": "^1.0.2",
     "ansi-styles": "^3.2.1",
@@ -66,7 +73,6 @@
     "html-comment-regex": "^1.1.2",
     "import-fresh": "^2.0.0",
     "indexes-of": "^1.0.1",
-    "install": "^0.13.0",
     "is-absolute-url": "^2.1.0",
     "is-arrayish": "^0.2.1",
     "is-bigint": "^1.0.1",
@@ -93,7 +99,6 @@
     "mkdirp": "^0.5.5",
     "node-releases": "^1.1.71",
     "normalize-url": "^3.3.0",
-    "npm": "^7.6.3",
     "nth-check": "^1.0.2",
     "object-inspect": "^1.9.0",
     "object-keys": "^1.1.1",
