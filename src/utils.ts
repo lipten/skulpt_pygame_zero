@@ -32,7 +32,7 @@ export const resetPygameZero = function(ModuleCache) {
       removeView: true
     });
     window.PIXI.loader.destroy();
-    ModuleCache.App = void 0;
+    ModuleCache.App = null;
     ModuleCache.timerMap.forEach(function(value, key) {
       window.clearInterval(value)
       window.clearTimeout(value)
