@@ -8,7 +8,7 @@ export function loadScript(src, varName){
   const res = new Promise(function(resolve, reject) {
     const el = document.createElement('script');
     el.onload = function() {
-      resolve(varName && window.varName);
+      resolve(varName && window[varName]);
     };
 
     el.onerror = function(e) {
