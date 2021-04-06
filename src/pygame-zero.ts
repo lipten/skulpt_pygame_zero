@@ -11,6 +11,11 @@ import {
   resetPygameZero,
 } from './utils'
 
+// Third-party plugins
+const CDN = {
+  tween: 'https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js'
+}
+
 //Aliases
 const Application = PIXI.Application,
 loader = PIXI.loader,
@@ -61,12 +66,11 @@ window.$builtinmodule = function() {
 
   // 角色类
   mod.Actor = Sk.misceval.buildClass(mod, function($gbl, $loc) {
-    // $loc.__init__就是构造器
     $loc.__init__ = new Sk.builtin.func(function(self, actorName, pos) {
       return new Sk.misceval.promiseToSuspension(new Promise(function(resolve) {
         actorName = Sk.ffi.remapToJs(actorName);
         pos = Sk.ffi.remapToJs(pos) || [];
-        textureRecources(actorName || `./assets/${actorName.v}/index.json`).then(function(texture) {
+        textureRecources(actorName).then(function(texture) {
           const sprite = new Sprite(texture)
           sprite.zOrder=1
           self.sprite = sprite;
@@ -274,7 +278,6 @@ window.$builtinmodule = function() {
       self.basicText && self.basicText.destroy()
     })
     $loc.text = new Sk.builtin.func(genkwaFunc(function(args, kwa) {
-      // args = Sk.ffi.remapToJs(args);
       kwa = Sk.ffi.remapToJs(kwa);
       let [self, str, pos, color, fontsize, fontname] = args;
       color = transColor(Sk.ffi.remapToJs(color || kwa.color));
@@ -350,12 +353,12 @@ window.$builtinmodule = function() {
     $loc.__init__ = new Sk.builtin.func(function(self) {
     })
     $loc.play = new Sk.builtin.func(function(self, name) {
-      ModuleCache.music.src = name.v || `./assets/${name.v}.mp3`;
+      ModuleCache.music.src = name.v;
       ModuleCache.music.loop = true;
       ModuleCache.music.play();
     })
     $loc.play_once = new Sk.builtin.func(function(self, name) {
-      ModuleCache.music.src = name.v || s`./assets/${name.v}.mp3`;
+      ModuleCache.music.src = name.v;
       ModuleCache.music.loop = false;
       ModuleCache.music.play();
     })
@@ -413,7 +416,7 @@ window.$builtinmodule = function() {
       const y = transY(kwa.y) || actor.sprite.y;
       const pos = transPos(targets) || transPos(kwa.pos) || [x, y];
       return new Sk.misceval.promiseToSuspension(new Promise(function(resolve) {
-        loadScript('https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js', 'Charm').then(() => {
+        loadScript(CDN.tween, 'Charm').then(() => {
           if (!charm) {
             // charm = new TWEEN(PIXI);
             app.ticker.add(() => {
@@ -421,17 +424,18 @@ window.$builtinmodule = function() {
               window.TWEEN.update();
             })
           }
+          const {Easing} = window.TWEEN;
           const tweenMap = {
-            linear: window.TWEEN.Easing.linear, // 线性
-            accelerate: window.TWEEN.Easing.Quartic.Out, // 加速
-            decelerate: window.TWEEN.Easing.Quartic.In, // 减速
-            accel_decel: window.TWEEN.Easing.Quartic.InOut, // 先加速再加速
-            elastic_start: window.TWEEN.Easing.Elastic.In, // 开始时反弹
-            elastic_end: window.TWEEN.Easing.Elastic.Out, // 结束时反弹
-            elastic_start_end: window.TWEEN.Easing.Elastic.InOut, // 开始结束都反弹
-            bounce_start: window.TWEEN.Easing.Bounce.In, // 开始时弹跳
-            bounce_end: window.TWEEN.Easing.Bounce.Out, // 结束时弹跳
-            bounce_start_end: window.TWEEN.Easing.Bounce.InOut, // 开始和结束都弹跳
+            linear: Easing.linear, // 线性
+            accelerate: Easing.Quartic.Out, // 加速
+            decelerate: Easing.Quartic.In, // 减速
+            accel_decel: Easing.Quartic.InOut, // 先加速再加速
+            elastic_start: Easing.Elastic.In, // 开始时反弹
+            elastic_end: Easing.Elastic.Out, // 结束时反弹
+            elastic_start_end: Easing.Elastic.InOut, // 开始结束都反弹
+            bounce_start: Easing.Bounce.In, // 开始时弹跳
+            bounce_end: Easing.Bounce.Out, // 结束时弹跳
+            bounce_start_end: Easing.Bounce.InOut, // 开始和结束都弹跳
           }
           self.ani = new window.TWEEN.Tween({
             x: actor.sprite.x,

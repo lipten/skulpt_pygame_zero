@@ -6,7 +6,7 @@
   },
   "name": "skulpt-pygame-zero",
   "description": "This module provides most of the functions of pygame-zero for skulpt",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "main": "dist/main.js",
   "files": [
     "lib",
