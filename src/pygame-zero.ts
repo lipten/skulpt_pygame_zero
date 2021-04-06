@@ -13,7 +13,7 @@ import {
 
 // Third-party plugins
 const CDN = {
-  tween: 'https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js'
+  tween: 'https://cdn.jsdelivr.net/npm/@tweenjs/tween.js@18.6.4/dist/tween.umd.js'
 }
 
 //Aliases
@@ -401,32 +401,37 @@ window.$builtinmodule = function() {
     $loc.stop = new Sk.builtin.func(function(self, name) {
       ModuleCache.soundMap[name.v].pause();
     })
+    $loc.get_length = new Sk.builtin.func(function(self, name) {
+      return Sk.ffi.remapToPy(Math.ceil(ModuleCache.soundMap[name.v].duration))
+    })
   }, 'Sound', []));
 
   // 动画类
+  let tweenTicker = false;
   mod.animate = Sk.misceval.buildClass(mod, function($gbl, $loc) {
-    let charm;
-    $loc.__init__ =  new Sk.builtin.func(genkwaFunc(function(args, kwa) {
-      kwa = Sk.ffi.remapToJs(kwa);
+    $loc.__init__ =  new Sk.builtin.func(genkwaFunc(function(args, oldkwa) {
+      // console.log(oldkwa)
+      const kwa = Sk.ffi.remapToJs(oldkwa);
       let [self, actor, tween, duration, on_finished, targets] = args;
       tween = tween || kwa.tween || 'linear';
       duration = duration || kwa.duration || 1;
-      on_finished = on_finished || kwa.on_finished
+      console.log(oldkwa)
+      on_finished = on_finished || oldkwa.entries.on_finished.rhs
+      
       const x = transX(kwa.x) || actor.sprite.x;
       const y = transY(kwa.y) || actor.sprite.y;
       const pos = transPos(targets) || transPos(kwa.pos) || [x, y];
       return new Sk.misceval.promiseToSuspension(new Promise(function(resolve) {
-        loadScript(CDN.tween, 'Charm').then(() => {
-          if (!charm) {
-            // charm = new TWEEN(PIXI);
+        loadScript(CDN.tween, 'TWEEN').then(() => {
+          if (!tweenTicker) {
             app.ticker.add(() => {
-              // charm.update()
               window.TWEEN.update();
             })
+            tweenTicker = true
           }
           const {Easing} = window.TWEEN;
           const tweenMap = {
-            linear: Easing.linear, // 线性
+            linear: Easing.Linear.None, // 线性
             accelerate: Easing.Quartic.Out, // 加速
             decelerate: Easing.Quartic.In, // 减速
             accel_decel: Easing.Quartic.InOut, // 先加速再加速
@@ -443,18 +448,13 @@ window.$builtinmodule = function() {
           }).to({
             x: pos[0] || x,
             y: pos[1] || y,
-          }, duration * 1000).easing(tweenMap[tween])
+          }, duration * 1000).easing(tweenMap[tween] || Easing.Linear.None)
           .onUpdate(function (object) {
             actor.sprite.y = object.y;
             actor.sprite.x = object.x;
+          }).onComplete(function() {
+            on_finished && Sk.misceval.callsimOrSuspend(on_finished)
           }).start();
-          self.ani.onComplete = function() {
-            on_finished && Sk.misceval.callsim(on_finished)
-          }
-          // self.ani = charm.slide(actor.sprite, pos[0] || x, pos[1] || y, duration * 60, tweenMap[tween])
-          // self.ani.onComplete = function() {
-          //   on_finished && Sk.misceval.callsim(on_finished)
-          // }
           resolve(void 0);
         })
     }));
