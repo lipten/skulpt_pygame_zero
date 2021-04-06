@@ -1,4 +1,7 @@
-export function loadScript(src: string, varName: string){
+import { PhysicsGraphics } from './matter-pixi';
+import { Body } from 'matter-js';
+
+export function loadScript(src, varName){
   if (window[varName]) {
     return Promise.resolve(window[varName]);
   }
@@ -254,4 +257,72 @@ export const defineProperty = function(obj, property) {
   }))
 }
   
-
+// 拓展graphics功能
+export const upgradeGraphics = function(mod, app, pixiMatter, func) {
+  return new Sk.builtin.func(function(self, ...args) {
+    return Sk.misceval.callsimOrSuspend(Sk.misceval.buildClass(mod, function($gbl, $loc) {
+      $loc.__init__ = new Sk.builtin.func(function(selfGraph) {
+        selfGraph.graph = new window.PIXI.Graphics();
+        const graph = selfGraph.graph;
+        func(self, graph, ...args)
+        const halfWidth = selfGraph.graph.width / 2;
+        const halfHeight = selfGraph.graph.height / 2;
+        const x = selfGraph.graph.graphicsData[0].shape.x;
+        const y = selfGraph.graph.graphicsData[0].shape.y;
+        if (selfGraph.graph.isCircle) {
+          selfGraph.graph.pivot.set(halfWidth * 2, halfHeight * 2)
+          selfGraph.graph.position.set(halfWidth * 2, halfWidth * 2)
+        } else {
+          selfGraph.graph.pivot.set(x+halfWidth, y+halfHeight)
+          selfGraph.graph.position.set(x+halfWidth, y+halfHeight)
+        }
+      })
+      $loc.rotation = defineProperty(function(selfGraph) {
+        return Sk.ffi.remapToPy(selfGraph.rotation)
+      }, function (selfGraph, val) {
+        if (selfGraph.physicGraphics) {
+          Body.setAngle(selfGraph.physicGraphics._body, val.v)
+        } else {
+          // selfGraph.graph.position.set(selfGraph.graph.x + pivotX, selfGraph.graph.y - pivotY)
+          selfGraph.graph.rotation = val.v
+        }
+      })
+      $loc.physicsImpostor = new Sk.builtin.func(genkwaFunc(function(args, kwa) {
+        kwa = Sk.ffi.remapToJs(kwa);
+        let [selfGraph, is_static, physicsOptions] = args;
+        is_static = Sk.ffi.remapToJs(is_static || kwa.is_static) || false;
+        let is_circle = false;
+        physicsOptions = Sk.ffi.remapToJs(physicsOptions || kwa.physicsOptions) || {}
+        const {graphicsData, width, height, line, rotation} = selfGraph.graph
+        const extra = {}
+        if (selfGraph.graph.isCircle){
+          is_circle = true;
+          extra.radius = graphicsData[0].shape.radius;
+        }
+        if (selfGraph.graph.isFilled) {
+          extra.fill = graphicsData[0].fillStyle.color
+        }
+        selfGraph.physicGraphics = new PhysicsGraphics({
+          x: graphicsData[0].shape.x,
+          y: graphicsData[0].shape.y,
+          width: width,
+          height: height,
+          lineWidth: line.width,
+          lineColor: line.color,
+          ...extra,
+        },{
+          isCircle: is_circle,
+          isStatic: is_static,
+          ...physicsOptions,
+        },({position, rotation}) => {
+          selfGraph.graph.position = position;
+          selfGraph.graph.rotation = rotation;
+        });
+        Body.setAngle(selfGraph.physicGraphics._body, rotation)
+        pixiMatter.addToWorld(selfGraph.physicGraphics);
+        // app.stage.removeChild(selfGraph.graph);
+        // app.stage.addChild(selfGraph.physicGraphics);
+      }, true))
+    }))
+  })
+}
