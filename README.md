@@ -15,7 +15,7 @@ npm install skulpt-pygame-zero
 Use cdn:
 
 ```
-https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero@master/dist/main.js
+https://cdn.jsdelivr.net/npm/skulpt-pygame-zero/dist/main.js
 ```
 
 ## Usege
@@ -27,7 +27,7 @@ https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero@master/dist/main.js
    import 'skulpt-pygame-zero'
    
    // cdn
-   <script src="https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero@master/dist/main.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/skulpt-pygame-zero/dist/main.js"></script>
    ```
 
    
