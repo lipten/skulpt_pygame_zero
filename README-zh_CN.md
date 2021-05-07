@@ -17,7 +17,7 @@ npm install skulpt-pygame-zero
 或者使用 cdn 引入:
 
 ```
-https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero@master/dist/main.js
+https://cdn.jsdelivr.net/npm/skulpt-pygame-zero/dist/main.js
 ```
 
 ## 快速上手
@@ -29,7 +29,7 @@ https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero@master/dist/main.js
 import 'skulpt-pygame-zero'
 
 // cdn
-<script src="https://cdn.jsdelivr.net/gh/lipten/skulpt-pygame-zero@master/dist/main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skulpt-pygame-zero/dist/main.js"></script>
 ```
 
 2. 使用 `PyGameZero.usePyGameZero` 包裹skulpt的read钩子函数
