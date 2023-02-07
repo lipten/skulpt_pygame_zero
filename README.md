@@ -83,7 +83,7 @@ Copy the code of [test/simple.py](https://github.com/lipten/skulpt-pygame-zero/b
    ```python
    pig = Actor(('https://static.lipten.link/blogs/pig1.png','https://static.lipten.link/blogs/pig2.png'))
    
-   # then ute frame=2 to switch the second photo
+   # then use frame=2 to switch the second photo
    pig.frame = 2
    ```
 
